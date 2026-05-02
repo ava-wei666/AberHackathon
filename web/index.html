@@ -1,0 +1,274 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>SceneLingo Input</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: #f4f7f9;
+        color: #182026;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      main {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 32px 18px;
+      }
+
+      header {
+        margin-bottom: 24px;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 32px;
+      }
+
+      p {
+        margin: 0;
+        color: #53616a;
+      }
+
+      section {
+        background: #ffffff;
+        border: 1px solid #dde5ea;
+        border-radius: 8px;
+        padding: 18px;
+        margin-bottom: 16px;
+      }
+
+      label {
+        display: block;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+
+      textarea,
+      select,
+      input,
+      button {
+        width: 100%;
+        box-sizing: border-box;
+        border: 1px solid #c8d3da;
+        border-radius: 6px;
+        font: inherit;
+      }
+
+      textarea,
+      select,
+      input {
+        padding: 10px 12px;
+        background: #fbfcfd;
+      }
+
+      textarea {
+        min-height: 150px;
+        resize: vertical;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      button {
+        cursor: pointer;
+        padding: 12px 14px;
+        border: 0;
+        background: #0f766e;
+        color: white;
+        font-weight: 800;
+      }
+
+      button.secondary {
+        background: #2f3b45;
+      }
+
+      pre {
+        white-space: pre-wrap;
+        word-break: break-word;
+        background: #101820;
+        color: #e7f4f1;
+        border-radius: 8px;
+        padding: 14px;
+        min-height: 120px;
+      }
+
+      .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .chip {
+        width: auto;
+        padding: 8px 10px;
+        background: #eaf3f1;
+        color: #17443f;
+      }
+
+      @media (max-width: 680px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <!-- 网页输入端：比赛时给手机或电脑输入 transcript 使用。 -->
+      <header>
+        <h1>SceneLingo</h1>
+        <p>Text input page for the FastAPI NLP pipeline.</p>
+      </header>
+
+      <section>
+        <div class="grid">
+          <div>
+            <label for="sourceType">Source</label>
+            <select id="sourceType">
+              <option value="real-world">Real-world</option>
+              <option value="story">Story</option>
+            </select>
+          </div>
+          <div>
+            <label for="contextSelect">Optional Context</label>
+            <select id="contextSelect">
+              <option value="">Auto detect</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <label for="rawText">Input Text</label>
+        <textarea id="rawText">Hi, can I get a latte with milk to go? How much is the large size?</textarea>
+        <div style="height: 12px"></div>
+        <button id="analyzeButton">Analyze Text</button>
+      </section>
+
+      <section>
+        <!-- 分析结果和保存按钮：模拟 CYD 上 Save Word / Save Phrase 的交互。 -->
+        <label>Analysis Result</label>
+        <pre id="resultOutput">Waiting for input...</pre>
+        <div id="saveButtons" class="chips"></div>
+      </section>
+
+      <section>
+        <button class="secondary" id="dashboardButton">Refresh Dashboard</button>
+        <pre id="dashboardOutput">Dashboard not loaded yet.</pre>
+      </section>
+    </main>
+
+    <script>
+      // 本地 hackathon 部署默认 laptop 后端地址；手机访问时可改成 laptop 的局域网 IP。
+      const API_BASE = "http://localhost:8000";
+      const sourceType = document.querySelector("#sourceType");
+      const contextSelect = document.querySelector("#contextSelect");
+      const rawText = document.querySelector("#rawText");
+      const resultOutput = document.querySelector("#resultOutput");
+      const dashboardOutput = document.querySelector("#dashboardOutput");
+      const saveButtons = document.querySelector("#saveButtons");
+
+      let latestResult = null;
+      let contextGroups = { real_world: [], story: [] };
+
+      async function loadContexts() {
+        // 页面启动时加载 4 个 seed contexts，用于下拉选择。
+        const response = await fetch(`${API_BASE}/contexts`);
+        contextGroups = await response.json();
+        renderContextOptions();
+      }
+
+      function renderContextOptions() {
+        // 根据 Real-world / Story 切换展示不同的 context 选项。
+        const key = sourceType.value === "story" ? "story" : "real_world";
+        contextSelect.innerHTML = '<option value="">Auto detect</option>';
+
+        for (const context of contextGroups[key] || []) {
+          const option = document.createElement("option");
+          option.value = context.id;
+          option.textContent = context.title;
+          contextSelect.appendChild(option);
+        }
+      }
+
+      async function analyzeText() {
+        // 调用后端统一分析接口，并把 JSON 结果直接展示出来，方便调试。
+        resultOutput.textContent = "Analyzing...";
+        saveButtons.innerHTML = "";
+
+        const response = await fetch(`${API_BASE}/analyze_text`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            raw_text: rawText.value,
+            source_type: sourceType.value,
+            optional_context: contextSelect.value || null,
+          }),
+        });
+
+        latestResult = await response.json();
+        resultOutput.textContent = JSON.stringify(latestResult, null, 2);
+        renderSaveButtons();
+      }
+
+      function renderSaveButtons() {
+        // 把关键词和短语渲染成可点击保存的 chip 按钮。
+        if (!latestResult) return;
+
+        const contextId = latestResult.detected_context.id;
+        const items = [
+          ...latestResult.keywords.map((item) => ({ item, type: "word" })),
+          ...latestResult.phrases.map((item) => ({ item, type: "phrase" })),
+        ];
+
+        for (const { item, type } of items) {
+          const button = document.createElement("button");
+          button.className = "chip";
+          button.textContent = `Save ${item}`;
+          button.addEventListener("click", () => saveItem(item, type, contextId));
+          saveButtons.appendChild(button);
+        }
+      }
+
+      async function saveItem(itemText, itemType, sourceContext) {
+        // 保存复习项后刷新 dashboard，能立刻看到保存结果。
+        await fetch(`${API_BASE}/save_item`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            item_text: itemText,
+            item_type: itemType,
+            source_context: sourceContext,
+          }),
+        });
+        await loadDashboard();
+      }
+
+      async function loadDashboard() {
+        // Dashboard 输出先保留 JSON 形式，方便后续 CYD 照着字段接 UI。
+        const response = await fetch(`${API_BASE}/dashboard`);
+        const dashboard = await response.json();
+        dashboardOutput.textContent = JSON.stringify(dashboard, null, 2);
+      }
+
+      sourceType.addEventListener("change", renderContextOptions);
+      document.querySelector("#analyzeButton").addEventListener("click", analyzeText);
+      document.querySelector("#dashboardButton").addEventListener("click", loadDashboard);
+
+      loadContexts().catch((error) => {
+        resultOutput.textContent = `Could not connect to API: ${error.message}`;
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "coffee_shop",
+    "title": "Coffee Shop",
+    "type": "real-world",
+    "tag": "coffee shop",
+    "summary": "Ordering drinks, asking about prices, and using polite service phrases.",
+    "seed_keywords": ["coffee", "latte", "tea", "milk", "order", "menu", "cash", "card", "receipt", "takeaway", "size", "drink"],
+    "seed_phrases": ["can i get", "how much is", "for here", "to go", "with milk"]
+  },
+  {
+    "id": "doctor_pharmacy",
+    "title": "Doctor / Pharmacy",
+    "type": "real-world",
+    "tag": "doctor",
+    "summary": "Describing symptoms, asking for medicine, and understanding basic health advice.",
+    "seed_keywords": ["doctor", "pharmacy", "medicine", "pain", "cough", "fever", "symptom", "tablet", "prescription", "appointment", "headache"],
+    "seed_phrases": ["i have a", "how long", "take this", "twice a day", "make an appointment"]
+  },
+  {
+    "id": "kings_cross",
+    "title": "Harry Potter - King's Cross",
+    "type": "story",
+    "tag": "magic school",
+    "summary": "A station scene about travel, tickets, platforms, luggage, and magical school vocabulary.",
+    "seed_keywords": ["train", "station", "platform", "ticket", "luggage", "magic", "school", "journey", "king", "cross", "wizard"],
+    "seed_phrases": ["which platform", "catch the train", "lost my ticket", "magic school", "king's cross"]
+  },
+  {
+    "id": "baker_street",
+    "title": "Sherlock Holmes - Baker Street",
+    "type": "story",
+    "tag": "detective",
+    "summary": "A detective scene about clues, cases, clients, observations, and careful questioning.",
+    "seed_keywords": ["detective", "clue", "case", "client", "mystery", "observe", "evidence", "london", "baker", "street", "investigate"],
+    "seed_phrases": ["tell me everything", "what happened", "look for clues", "solve the case", "baker street"]
+  }
+]
