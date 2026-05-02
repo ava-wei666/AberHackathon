@@ -12,8 +12,8 @@ import task_handler
 # The following values need to be customized.
 
 # Switch width and height for portrait mode.
-DISPLAY_WIDTH = const(320)
-DISPLAY_HEIGHT = const(240)
+DISPLAY_WIDTH = const(240)
+DISPLAY_HEIGHT = const(320)
 # Try different values from rotation table, see below.
 _DISPLAY_ROT = const(0x20)
 # Set to True if red and blue are switched.
