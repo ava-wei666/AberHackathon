@@ -1,6 +1,16 @@
 # 线 A 详细任务书 - Backend / NLP / Database
 
-这份文档只给线 A 使用，目标是让负责后端的人不用再讨论技术选型，直接按任务推进。线 A 的最终交付物是一个稳定的 FastAPI 后端，负责接收文本、完成 NLP 分析、保存结果，并给 Web 和 CYD 提供统一 API。
+这份文件只给线 A 使用，目标是让负责后端的人不用再讨论技术选型，直接按任务推进。线 A 不负责继续写项目文档，最终交付物是一个稳定的 FastAPI 后端，负责接收文本、完成 NLP 分析、保存结果，并给 Web 和 CYD 提供统一 API。
+
+## 三条线重新分配
+
+```text
+线 A：Backend + NLP + SQLite
+线 B：Web Input + Web Dashboard
+线 C：CYD LVGL Display + Hardware Integration
+```
+
+线 A 只做后端功能和 API 联调，不接管线 B 的网页页面，也不接管线 C 的 CYD 屏幕实现。
 
 ## 统一技术栈
 
@@ -58,6 +68,12 @@ scenelingo.db
 - `requirements.txt`：Python 依赖版本
 - `scenelingo.db`：运行后自动生成，不提交到 Git
 
+线 A 不负责这些文件：
+
+- `web/index.html`：线 B 负责
+- `lvgl9_firmwares/touch_color_test.py`：线 C 负责
+- `lvgl9_firmwares/scenelingo_dashboard.py`：线 C 负责
+
 ## 本地启动步骤
 
 在 PowerShell 里执行：
@@ -92,9 +108,10 @@ http://localhost:8000
 
 ## 线 A 最终目标
 
-后端必须稳定提供这 5 个接口：
+后端必须稳定提供这些接口：
 
 ```
+GET  /
 POST /analyze_text
 GET  /contexts
 GET  /context/{id}
@@ -113,6 +130,8 @@ Web / CYD
   -> API response
   -> Web / CYD dashboard
 ```
+
+线 A 的判断标准很简单：线 B 和线 C 不需要知道 NLP 和数据库怎么实现，只要调 API 就能完成展示。
 
 ## Task A0 - 环境确认
 
@@ -663,7 +682,7 @@ coffee_shop
 
 ## Task A15 - 给线 B 的联调信息
 
-线 A 每次准备联调时，必须给线 B 这几项：
+线 B 负责 Web Input + Web Dashboard。线 A 每次准备联调时，必须给线 B 这几项：
 
 ```
 后端地址：
@@ -679,6 +698,31 @@ POST /save_item
 GET /dashboard
 ```
 
+线 B 需要验证的 Web 闭环：
+
+```text
+输入文本 -> POST /analyze_text -> 显示结果 -> POST /save_item -> GET /dashboard
+```
+
+线 A 要保证这些 API 字段稳定，不临时改返回结构。
+
+## Task A16 - 给线 C 的 CYD 联调信息
+
+线 C 负责 CYD LVGL Display + Hardware Integration。线 A 不写 CYD 页面，但要让 CYD 能稳定请求后端。
+
+线 A 必须给线 C 这几项：
+
+```text
+局域网 API：
+http://你的局域网IP:8000
+
+CYD 主要调用：
+GET /contexts
+GET /context/{id}
+POST /save_item
+GET /dashboard
+```
+
 如果 CYD 访问 laptop，要确认：
 
 - laptop 和 CYD 在同一个 Wi-Fi / hotspot
@@ -689,15 +733,43 @@ GET /dashboard
 uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-## Task A16 - 给线 C 的测试支持
+线 C 需要验证的 CYD 闭环：
 
-线 C 会准备 4 段 demo 文本。线 A 要帮忙检查：
+```text
+CYD 请求 /dashboard -> 显示 saved words / saved phrases
+CYD 点击保存 -> POST /save_item -> Web dashboard 能看到更新
+```
 
-- 文本能否分类到正确 context
-- keywords 是否适合展示
-- phrases 是否适合学习
-- summary 是否太长
-- CYD 屏幕上是否能显示得下
+线 A 要特别注意：
+
+- `/dashboard` 返回字段要短、稳定、容易显示
+- `/context/{id}` 返回内容可以直接当 CYD 场景卡片
+- 不能要求 CYD 处理复杂数据结构
+- 不能要求 CYD 直接读 SQLite
+
+## Task A17 - Demo 测试文本自测
+
+线 A 不单独负责写 demo 文档，但必须用下面 4 段文本自测后端效果：
+
+```text
+Coffee Shop:
+Hi, can I get a latte with milk to go? How much is the large size?
+
+Doctor / Pharmacy:
+I have a headache and a cough. Do I need medicine from the pharmacy?
+
+King's Cross:
+Which platform should I use to catch the train to the magic school at King's Cross?
+
+Baker Street:
+The detective found a clue on Baker Street and tried to solve the case.
+```
+
+验收：
+
+- 四段文本能分类到正确 context
+- keywords 和 phrases 能给线 B / 线 C 展示
+- summary 不要太长，CYD 小屏幕能显示
 
 如果效果不好，优先调整：
 
@@ -712,13 +784,14 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 线 A 完成时，必须满足：
 
 - 后端可以一条命令启动
-- 5 个 MVP API 全部可用
+- MVP API 全部可用
 - SQLite 自动初始化
 - 4 个 context seed data 正常返回
 - 文本输入能得到 cleaned text、keywords、phrases、detected context、summary
 - save item 能写入 dashboard
 - Web 和 CYD 不需要知道数据库细节
 - 没有网络、没有 LLM API key 时仍可完整演示
+- 线 A 没有额外承担 Web 页面、CYD 页面、项目文档产出
 
 ## 常见问题处理
 
