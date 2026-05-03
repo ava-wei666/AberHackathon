@@ -300,6 +300,10 @@ def fetch_dashboard():
 
 
 def save_item(item_text, item_type, source_context):
+    # C10 要求 payload 必须包含三个字段：
+    #   item_text    — 保存的词或短语原文
+    #   item_type    — 必须是 "word" 或 "phrase"，不能传错
+    #   source_context — 当前 context 的 id（如 "coffee_shop"）
     payload = {
         "item_text": item_text,
         "item_type": item_type,
@@ -307,6 +311,8 @@ def save_item(item_text, item_type, source_context):
     }
 
     result = api_post("/save_item", payload)
+    # mock 模式下同步更新内存中的 MOCK_DASHBOARD，
+    # 保证点击保存后立刻 Refresh Dashboard 能看到新条目。
     if USE_MOCK_DATA and result and result.get("saved"):
         add_mock_saved_item(item_text, item_type)
     return result
@@ -324,7 +330,10 @@ def mock_context(context_id):
 
 
 def add_mock_saved_item(item_text, item_type):
-    # mock 保存只更新内存里的 dashboard，方便 C3 阶段点击后立刻看到 Refresh 效果。
+    # mock 模式下在内存中模拟后端保存行为：
+    # word 插入 saved_words 列表头部，phrase 插入 saved_phrases 列表头部。
+    # review_today 递增，保证 Dashboard 每次保存后统计数字有变化。
+    # 注意：这只影响内存，重启设备后数据丢失（mock 不持久化）。
     if item_type == "word":
         MOCK_DASHBOARD["saved_words"].insert(0, {"item_text": item_text})
     elif item_type == "phrase":
@@ -675,18 +684,27 @@ def _render_insight(data):
     lv.screen_load(scr)
 
 
+# ==================== C10 Save Interaction ====================
+# C10 要求：点击 keyword 保存为 word，点击 phrase 保存为 phrase。
+# item_type 必须正确传入（"word" / "phrase"），source_context 为当前 context id。
+# 保存成功显示 "Saved: <item>"，保存失败显示 "Save failed"，页面不崩溃。
+# 按钮回调 -> handle_save() -> save_item() -> api_post("/save_item", payload)。
+
 def handle_save(item_text, item_type, source_context):
-    # 空文本不发请求，直接提示用户。
+    # 空文本不发请求（例如 mock 数据中 keyword 列表为空时的防御）。
     if not item_text:
         set_status("Nothing to save")
         return
 
+    # C10 核心：调用 save_item() 向后端发送 POST /save_item。
+    # item_type 必须是 "word" 或 "phrase"，由调用方（按钮回调）保证传入正确值。
     result = save_item(item_text, item_type, source_context)
+
     if result and result.get("saved"):
-        # mock 模式和真实 API 均返回 {"saved": True}，统一显示 Saved。
-        set_status("Saved")
+        # 成功时显示保存的内容前 12 字符，方便用户确认点的是哪个词。
+        set_status("Saved: " + item_text[:12])
     else:
-        # 真实 API 失败时明确提示，但页面保持可用，不崩溃。
+        # 真实 API 失败时明确提示，但 Insight View 保持可用，不崩溃不跳页。
         set_status("Save failed")
 
 
