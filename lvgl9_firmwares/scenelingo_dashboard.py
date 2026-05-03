@@ -161,6 +161,14 @@ MOCK_DASHBOARD = {
 display = None
 indev = None
 lv_task_handler = None
+
+# 这 4 个总线/设备对象必须挂在模块级，否则 init_display() 函数返回后会被 GC，
+# 触摸 SPI 总线断开 -> 触摸读不到 -> 按钮看着画了却点不响应。
+# touch_color_test.py 之所以 work，是因为它在模块级创建这些对象（永远存活）。
+display_bus = None
+spi_bus = None
+indev_bus = None
+indev_device = None
 screen_history = []
 current_route = None
 current_source_type = "real-world"
@@ -484,6 +492,7 @@ def normalize_context(data):
 def init_display():
     # 业务文件独立初始化屏幕和触摸，不依赖 touch_color_test.py。
     global display, indev, lv_task_handler
+    global display_bus, spi_bus, indev_bus, indev_device
 
     if display is not None:
         return
