@@ -10,7 +10,7 @@
 | 执行日期     | `2026-05-03`                                                                    |
 | 工作目录     | `C:\hackathon`                                                                  |
 | 后端地址     | `http://127.0.0.1:8000/`                                                        |
-| 当前服务进程   | `42864`                                                                         |
+| 当前服务进程   | A7 后已重启为 `48024`                                                                |
 | 主要涉及文件   | `backend/nlp_engine.py`、`backend/database.py`、`backend/main.py`、`scenelingo.db` |
 | 本次业务代码改动 | 无                                                                               |
 | 文档记录     | `docs/LINE_A_A6_STEPS.md`                                                       |
@@ -203,9 +203,9 @@ expected=baker_street; detected=baker_street; confidence=0.95; has_required=True
 
 | 字段   | 内容                       |
 | ---- | ------------------------ |
-| 当前进程 | `42864`                  |
+| 当前进程 | `48024`                  |
 | 本机访问 | `http://127.0.0.1:8000/` |
-| 停止命令 | `Stop-Process -Id 42864` |
+| 停止命令 | `Stop-Process -Id 48024` |
 
 ## 结论
 

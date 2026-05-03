@@ -11,7 +11,7 @@
 | 工作目录 | `C:\hackathon` |
 | 数据库文件 | `C:\hackathon\scenelingo.db` |
 | 后端地址 | `http://127.0.0.1:8000/` |
-| 当前服务进程 | A5 后已重启为 `42864` |
+| 当前服务进程 | A7 后已重启为 `48024` |
 | 主要涉及文件 | `backend/database.py`、`backend/main.py`、`.gitignore` |
 | 本次业务代码改动 | `backend/database.py` 显式关闭 SQLite 连接 |
 | 文档记录 | `docs/LINE_A_A3_STEPS.md` |
@@ -91,7 +91,7 @@ Invoke-RestMethod -Uri http://127.0.0.1:8000/save_item -Method Post -ContentType
 | `/save_item` 写入 word | `receipt` 写入成功，`word_id=3` |
 | `/save_item` 写入 phrase | `for here` 写入成功，`phrase_id=4` |
 | `/dashboard` 读取 | 能读到 saved words / saved phrases |
-| 服务重启 | A3 验收时进程为 `19644`，A5 后当前进程为 `42864` |
+| 服务重启 | A3 验收时进程为 `19644`，A7 后当前进程为 `48024` |
 
 表结构检查输出：
 
@@ -146,10 +146,10 @@ seed_sync_summary=A3 sync check summary
 
 | 字段 | 内容 |
 | --- | --- |
-| 当前进程 | `42864` |
+| 当前进程 | `48024` |
 | 本机访问 | `http://127.0.0.1:8000/` |
 | 局域网监听 | `0.0.0.0:8000` |
-| 停止命令 | `Stop-Process -Id 42864` |
+| 停止命令 | `Stop-Process -Id 48024` |
 
 ## 临时目录记录
 

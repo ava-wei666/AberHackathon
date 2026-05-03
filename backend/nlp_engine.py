@@ -187,8 +187,8 @@ def _build_summary(
     keywords: list[str],
     phrases: list[str],
 ) -> str:
-    # LLM 接入前先用模板生成 summary，保证没有网络和 API key 时仍然能演示。
+    # LLM 接入前先用本地模板生成一句 summary，保证离线时也适合 CYD 小屏幕展示。
     title = detected_context.get("title", "this context")
     focus_terms = ", ".join(keywords[:3]) if keywords else "core vocabulary"
-    phrase_tip = f" Practice phrases like '{phrases[0]}'." if phrases else ""
-    return f"This looks like {title}. Focus on {focus_terms}.{phrase_tip}"
+    phrase_tip = f" and practice phrases like '{phrases[0]}'" if phrases else ""
+    return f"This looks like {title}: focus on {focus_terms}{phrase_tip}."
