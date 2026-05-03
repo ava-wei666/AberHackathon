@@ -3,103 +3,251 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SceneLingo Input</title>
+    <title>SceneLingo Web Input</title>
     <style>
       :root {
         color-scheme: light;
         font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-        background: #f4f7f9;
-        color: #182026;
+        background: #f5f7fa;
+        color: #172026;
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
         margin: 0;
+        background: #f5f7fa;
       }
 
       main {
-        max-width: 900px;
+        width: min(1080px, calc(100% - 32px));
         margin: 0 auto;
-        padding: 32px 18px;
+        padding: 28px 0 40px;
       }
 
       header {
-        margin-bottom: 24px;
+        margin-bottom: 22px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
       }
 
       h1 {
-        margin: 0 0 8px;
-        font-size: 32px;
+        font-size: clamp(30px, 4vw, 44px);
+        line-height: 1.05;
+      }
+
+      h2 {
+        font-size: 18px;
+      }
+
+      h3 {
+        font-size: 14px;
+        color: #3d4b55;
       }
 
       p {
-        margin: 0;
-        color: #53616a;
-      }
-
-      section {
-        background: #ffffff;
-        border: 1px solid #dde5ea;
-        border-radius: 8px;
-        padding: 18px;
-        margin-bottom: 16px;
+        color: #5c6872;
+        line-height: 1.5;
       }
 
       label {
         display: block;
-        font-weight: 700;
         margin-bottom: 8px;
+        color: #26323a;
+        font-weight: 700;
       }
 
-      textarea,
       select,
-      input,
+      textarea,
       button {
         width: 100%;
-        box-sizing: border-box;
-        border: 1px solid #c8d3da;
-        border-radius: 6px;
+        border-radius: 7px;
         font: inherit;
       }
 
-      textarea,
       select,
-      input {
-        padding: 10px 12px;
+      textarea {
+        border: 1px solid #cbd5dd;
         background: #fbfcfd;
+        color: #172026;
+      }
+
+      select {
+        min-height: 42px;
+        padding: 9px 11px;
       }
 
       textarea {
-        min-height: 150px;
+        min-height: 158px;
+        padding: 12px;
         resize: vertical;
+      }
+
+      button {
+        min-height: 42px;
+        border: 0;
+        padding: 10px 13px;
+        background: #0f6f68;
+        color: #ffffff;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      button:hover {
+        background: #0b5e58;
+      }
+
+      button:disabled {
+        cursor: not-allowed;
+        opacity: 0.58;
+      }
+
+      button.secondary {
+        background: #32424c;
+      }
+
+      button.secondary:hover {
+        background: #26343d;
+      }
+
+      button.ghost {
+        border: 1px solid #cbd5dd;
+        background: #ffffff;
+        color: #26323a;
+      }
+
+      button.ghost:hover {
+        background: #eef3f6;
+      }
+
+      section {
+        margin-bottom: 16px;
+        border: 1px solid #dce4ea;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 18px;
+      }
+
+      .page-intro {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+      }
+
+      .api-note {
+        max-width: 460px;
+        font-size: 14px;
+        text-align: right;
+      }
+
+      .section-title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
       }
 
       .grid {
         display: grid;
         grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .stack {
+        display: grid;
         gap: 12px;
       }
 
-      button {
-        cursor: pointer;
-        padding: 12px 14px;
-        border: 0;
-        background: #0f766e;
-        color: white;
-        font-weight: 800;
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 12px;
       }
 
-      button.secondary {
-        background: #2f3b45;
+      .actions button {
+        width: auto;
       }
 
-      pre {
-        white-space: pre-wrap;
-        word-break: break-word;
-        background: #101820;
-        color: #e7f4f1;
+      .demo-buttons {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .demo-buttons button {
+        min-height: 38px;
+        padding: 8px 10px;
+        font-size: 13px;
+      }
+
+      .status {
+        min-height: 22px;
+        color: #4f5e68;
+        font-size: 14px;
+      }
+
+      .status.error {
+        color: #b3261e;
+        font-weight: 700;
+      }
+
+      .status.success {
+        color: #0d6b3c;
+        font-weight: 700;
+      }
+
+      .result-grid,
+      .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .panel {
+        border: 1px solid #e0e7ec;
         border-radius: 8px;
+        background: #fbfcfd;
         padding: 14px;
-        min-height: 120px;
+      }
+
+      .panel.wide {
+        grid-column: 1 / -1;
+      }
+
+      .metric {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .metric-value {
+        color: #0f6f68;
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .context-title {
+        margin-top: 8px;
+        color: #111a20;
+        font-size: 24px;
+        font-weight: 900;
+      }
+
+      .muted {
+        color: #65727b;
+        font-size: 14px;
       }
 
       .chips {
@@ -110,38 +258,144 @@
       }
 
       .chip {
-        width: auto;
-        padding: 8px 10px;
-        background: #eaf3f1;
+        display: inline-flex;
+        align-items: center;
+        max-width: 100%;
+        min-height: 32px;
+        border-radius: 999px;
+        background: #e9f3f1;
         color: #17443f;
+        padding: 7px 10px;
+        font-size: 14px;
+        font-weight: 750;
+        overflow-wrap: anywhere;
       }
 
-      @media (max-width: 680px) {
-        .grid {
+      .chip.phrase {
+        background: #eef1f8;
+        color: #263d6b;
+      }
+
+      .save-chip {
+        width: auto;
+        min-height: 34px;
+        border: 1px solid #c9d9d5;
+        background: #ffffff;
+        color: #17443f;
+        padding: 7px 10px;
+        font-size: 14px;
+      }
+
+      .save-chip:hover {
+        background: #e9f3f1;
+      }
+
+      .item-list {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+        padding: 0;
+        list-style: none;
+      }
+
+      .item-list li {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        border-bottom: 1px solid #e4ebef;
+        padding-bottom: 8px;
+      }
+
+      .item-list li:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+      }
+
+      .empty {
+        margin-top: 10px;
+        color: #707d86;
+        font-size: 14px;
+      }
+
+      details {
+        margin-top: 14px;
+      }
+
+      summary {
+        cursor: pointer;
+        color: #31424c;
+        font-weight: 800;
+      }
+
+      pre {
+        margin: 10px 0 0;
+        max-height: 280px;
+        overflow: auto;
+        border-radius: 8px;
+        background: #111a20;
+        color: #e7f4f1;
+        padding: 14px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: min(100% - 24px, 1080px);
+          padding-top: 20px;
+        }
+
+        .page-intro {
+          display: grid;
+          align-items: start;
+        }
+
+        .api-note {
+          max-width: none;
+          text-align: left;
+        }
+
+        .grid,
+        .result-grid,
+        .dashboard-grid,
+        .demo-buttons {
           grid-template-columns: 1fr;
+        }
+
+        .actions button {
+          width: 100%;
         }
       }
     </style>
   </head>
   <body>
     <main>
-      <!-- 网页输入端：比赛时给手机或电脑输入 transcript 使用。 -->
-      <header>
-        <h1>SceneLingo</h1>
-        <p>Text input page for the FastAPI NLP pipeline.</p>
+      <header class="page-intro">
+        <div class="stack">
+          <h1>SceneLingo</h1>
+          <p>Web Input / Web Dashboard fallback demo for the FastAPI NLP pipeline.</p>
+        </div>
+        <p class="api-note">
+          Laptop default API is controlled by the single script setting. On mobile, change that setting to the laptop LAN IP.
+        </p>
       </header>
 
-      <section>
+      <section aria-labelledby="sourceTitle">
+        <div class="section-title">
+          <h2 id="sourceTitle">1. Source / Context</h2>
+          <span id="contextStatus" class="status">Loading contexts...</span>
+        </div>
         <div class="grid">
           <div>
-            <label for="sourceType">Source</label>
+            <label for="sourceType">Source select</label>
             <select id="sourceType">
               <option value="real-world">Real-world</option>
               <option value="story">Story</option>
             </select>
           </div>
           <div>
-            <label for="contextSelect">Optional Context</label>
+            <label for="contextSelect">Optional Context select</label>
             <select id="contextSelect">
               <option value="">Auto detect</option>
             </select>
@@ -149,52 +403,166 @@
         </div>
       </section>
 
-      <section>
-        <label for="rawText">Input Text</label>
+      <section aria-labelledby="inputTitle">
+        <div class="section-title">
+          <h2 id="inputTitle">2. Text Input</h2>
+          <span id="analysisStatus" class="status">Waiting for input.</span>
+        </div>
+        <label for="rawText">Typed Text / Transcript</label>
         <textarea id="rawText">Hi, can I get a latte with milk to go? How much is the large size?</textarea>
-        <div style="height: 12px"></div>
-        <button id="analyzeButton">Analyze Text</button>
+        <div class="demo-buttons" aria-label="Demo test inputs">
+          <button class="ghost" type="button" data-demo="coffee">Coffee Shop</button>
+          <button class="ghost" type="button" data-demo="pharmacy">Doctor / Pharmacy</button>
+          <button class="ghost" type="button" data-demo="kings">King's Cross</button>
+          <button class="ghost" type="button" data-demo="baker">Baker Street</button>
+        </div>
+        <div class="actions">
+          <button id="analyzeButton" type="button">Analyze Text</button>
+        </div>
       </section>
 
-      <section>
-        <!-- 分析结果和保存按钮：模拟 CYD 上 Save Word / Save Phrase 的交互。 -->
-        <label>Analysis Result</label>
-        <pre id="resultOutput">Waiting for input...</pre>
+      <section aria-labelledby="resultTitle">
+        <div class="section-title">
+          <h2 id="resultTitle">3. Analysis Result</h2>
+        </div>
+        <div id="analysisResult" class="result-grid">
+          <div class="panel wide">
+            <h3>Detected Context</h3>
+            <p class="empty">Analyze text to see the detected context, keywords, phrases, and summary.</p>
+          </div>
+        </div>
+        <details>
+          <summary>Debug raw analysis JSON</summary>
+          <pre id="rawAnalysisJson">No analysis yet.</pre>
+        </details>
+      </section>
+
+      <section aria-labelledby="saveTitle">
+        <div class="section-title">
+          <h2 id="saveTitle">4. Save Buttons</h2>
+          <span id="saveStatus" class="status">Analyze text before saving review items.</span>
+        </div>
         <div id="saveButtons" class="chips"></div>
       </section>
 
-      <section>
-        <button class="secondary" id="dashboardButton">Refresh Dashboard</button>
-        <pre id="dashboardOutput">Dashboard not loaded yet.</pre>
+      <section aria-labelledby="dashboardTitle">
+        <div class="section-title">
+          <h2 id="dashboardTitle">5. Web Dashboard</h2>
+          <span id="dashboardStatus" class="status">Dashboard not loaded yet.</span>
+        </div>
+        <div class="actions">
+          <button class="secondary" id="dashboardButton" type="button">Refresh Dashboard</button>
+        </div>
+        <div id="dashboardOutput" class="dashboard-grid">
+          <div class="panel wide">
+            <p class="empty">Click Refresh Dashboard to load saved words, saved phrases, top context, recent keywords, and review count.</p>
+          </div>
+        </div>
+        <details>
+          <summary>Debug raw dashboard JSON</summary>
+          <pre id="rawDashboardJson">No dashboard data yet.</pre>
+        </details>
       </section>
     </main>
 
     <script>
-      // 本地 hackathon 部署默认 laptop 后端地址；手机访问时可改成 laptop 的局域网 IP。
+      // API 地址只保留这一处；手机访问时把这一处改成 laptop 的局域网 IP。
       const API_BASE = "http://localhost:8000";
+
       const sourceType = document.querySelector("#sourceType");
       const contextSelect = document.querySelector("#contextSelect");
       const rawText = document.querySelector("#rawText");
-      const resultOutput = document.querySelector("#resultOutput");
+      const analyzeButton = document.querySelector("#analyzeButton");
+      const dashboardButton = document.querySelector("#dashboardButton");
+      const analysisResult = document.querySelector("#analysisResult");
       const dashboardOutput = document.querySelector("#dashboardOutput");
       const saveButtons = document.querySelector("#saveButtons");
+      const rawAnalysisJson = document.querySelector("#rawAnalysisJson");
+      const rawDashboardJson = document.querySelector("#rawDashboardJson");
+      const contextStatus = document.querySelector("#contextStatus");
+      const analysisStatus = document.querySelector("#analysisStatus");
+      const saveStatus = document.querySelector("#saveStatus");
+      const dashboardStatus = document.querySelector("#dashboardStatus");
 
       let latestResult = null;
       let contextGroups = { real_world: [], story: [] };
 
+      const demoInputs = {
+        coffee: {
+          source: "real-world",
+          text: "Hi, can I get a latte with milk to go? How much is the large size?",
+        },
+        pharmacy: {
+          source: "real-world",
+          text: "I have a headache and a cough. Do I need medicine from the pharmacy?",
+        },
+        kings: {
+          source: "story",
+          text: "Which platform should I use to catch the train to the magic school at King's Cross?",
+        },
+        baker: {
+          source: "story",
+          text: "The detective found a clue on Baker Street and tried to solve the case.",
+        },
+      };
+
+      function setStatus(element, message, type = "neutral") {
+        element.textContent = message;
+        element.classList.toggle("error", type === "error");
+        element.classList.toggle("success", type === "success");
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      async function parseJsonResponse(response) {
+        const text = await response.text();
+        const data = text ? JSON.parse(text) : {};
+
+        if (!response.ok) {
+          const detail = data.detail || data.message || text || "Unknown API error";
+          throw new Error(`HTTP ${response.status}: ${detail}`);
+        }
+
+        return data;
+      }
+
+      function asArray(value) {
+        return Array.isArray(value) ? value : [];
+      }
+
+      function uniqueLimitedItems(items, limit) {
+        return [...new Set(asArray(items).filter(Boolean))].slice(0, limit);
+      }
+
       async function loadContexts() {
-        // 页面启动时加载 4 个 seed contexts，用于下拉选择。
-        const response = await fetch(`${API_BASE}/contexts`);
-        contextGroups = await response.json();
-        renderContextOptions();
+        setStatus(contextStatus, "Loading contexts...");
+
+        try {
+          const response = await fetch(`${API_BASE}/contexts`);
+          contextGroups = await parseJsonResponse(response);
+          renderContextOptions();
+          setStatus(contextStatus, "Contexts loaded.", "success");
+        } catch (error) {
+          contextGroups = { real_world: [], story: [] };
+          renderContextOptions();
+          setStatus(contextStatus, `Could not load contexts: ${error.message}`, "error");
+        }
       }
 
       function renderContextOptions() {
-        // 根据 Real-world / Story 切换展示不同的 context 选项。
-        const key = sourceType.value === "story" ? "story" : "real_world";
+        const groupKey = sourceType.value === "story" ? "story" : "real_world";
+        const contexts = asArray(contextGroups[groupKey]);
+
         contextSelect.innerHTML = '<option value="">Auto detect</option>';
 
-        for (const context of contextGroups[key] || []) {
+        for (const context of contexts) {
           const option = document.createElement("option");
           option.value = context.id;
           option.textContent = context.title;
@@ -203,23 +571,42 @@
       }
 
       async function analyzeText() {
-        // 调用后端统一分析接口，并把 JSON 结果直接展示出来，方便调试。
-        resultOutput.textContent = "Analyzing...";
+        const text = rawText.value.trim();
+
+        if (!text) {
+          setStatus(analysisStatus, "Please enter some text first.", "error");
+          return;
+        }
+
+        latestResult = null;
+        analyzeButton.disabled = true;
         saveButtons.innerHTML = "";
+        rawAnalysisJson.textContent = "Analyzing...";
+        renderAnalysisEmpty("Analyzing...");
+        setStatus(saveStatus, "Analyze text before saving review items.");
+        setStatus(analysisStatus, "Analyzing...");
 
         try {
+<<<<<<< HEAD
           // 加 try/catch 是为了把 fetch / 解析异常显式打到 UI；
           // 否则后端没启动或 CORS 失败时网页会一直卡在 "Analyzing..."。
+=======
+>>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
           const response = await fetch(`${API_BASE}/analyze_text`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+<<<<<<< HEAD
               raw_text: rawText.value,
+=======
+              raw_text: text,
+>>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
               source_type: sourceType.value,
               optional_context: contextSelect.value || null,
             }),
           });
 
+<<<<<<< HEAD
           if (!response.ok) {
             // 4xx / 5xx 也要让用户看到，比如 422（输入校验失败）。
             const errorText = await response.text();
@@ -260,6 +647,113 @@
 
       async function saveItem(itemText, itemType, sourceContext) {
         // 保存复习项后刷新 dashboard，能立刻看到保存结果。
+=======
+          latestResult = await parseJsonResponse(response);
+          rawAnalysisJson.textContent = JSON.stringify(latestResult, null, 2);
+          renderAnalysisResult(latestResult);
+          renderSaveButtons(latestResult);
+          setStatus(analysisStatus, "Analysis complete.", "success");
+        } catch (error) {
+          rawAnalysisJson.textContent = error.message;
+          renderAnalysisEmpty(`Could not analyze text: ${error.message}`, true);
+          setStatus(analysisStatus, `Could not analyze text: ${error.message}`, "error");
+        } finally {
+          analyzeButton.disabled = false;
+        }
+      }
+
+      function renderAnalysisEmpty(message, isError = false) {
+        analysisResult.innerHTML = `
+          <div class="panel wide">
+            <h3>Detected Context</h3>
+            <p class="${isError ? "status error" : "empty"}">${escapeHtml(message)}</p>
+          </div>
+        `;
+      }
+
+      function renderAnalysisResult(result) {
+        const detectedContext = result.detected_context || {};
+        const keywords = asArray(result.keywords);
+        const phrases = asArray(result.phrases);
+        const suggestedItems = asArray(result.suggested_review_items);
+        const confidence = detectedContext.confidence != null ? `${Math.round(Number(detectedContext.confidence) * 100)}% confidence` : "confidence unavailable";
+
+        analysisResult.innerHTML = `
+          <div class="panel wide">
+            <h3>Detected Context</h3>
+            <div class="context-title">${escapeHtml(detectedContext.title || "Unknown Context")}</div>
+            <p class="muted">${escapeHtml(detectedContext.id || "unknown")} · ${escapeHtml(detectedContext.type || "unknown")} · ${escapeHtml(confidence)}</p>
+          </div>
+          <div class="panel">
+            <h3>Top Keywords</h3>
+            ${renderChips(keywords, "word")}
+          </div>
+          <div class="panel">
+            <h3>Useful Phrases</h3>
+            ${renderChips(phrases, "phrase")}
+          </div>
+          <div class="panel wide">
+            <h3>Context Summary</h3>
+            <p>${escapeHtml(result.summary || detectedContext.summary || "No summary returned.")}</p>
+          </div>
+          <div class="panel wide">
+            <h3>Suggested Review Items</h3>
+            ${renderChips(suggestedItems, "review")}
+          </div>
+        `;
+      }
+
+      function renderChips(items, type) {
+        const values = asArray(items).filter(Boolean);
+
+        if (!values.length) {
+          return '<p class="empty">No items returned.</p>';
+        }
+
+        const className = type === "phrase" ? "chip phrase" : "chip";
+        return `
+          <div class="chips">
+            ${values.map((item) => `<span class="${className}">${escapeHtml(item)}</span>`).join("")}
+          </div>
+        `;
+      }
+
+      function renderSaveButtons(result) {
+        const detectedContext = result.detected_context || {};
+        const contextId = detectedContext.id || null;
+        const words = uniqueLimitedItems(result.keywords, 6);
+        const phrases = uniqueLimitedItems(result.phrases, 6);
+
+        saveButtons.innerHTML = "";
+
+        const reviewItems = [
+          ...words.map((itemText) => ({ itemText, itemType: "word", label: "Save Word" })),
+          ...phrases.map((itemText) => ({ itemText, itemType: "phrase", label: "Save Phrase" })),
+        ];
+
+        if (!reviewItems.length) {
+          setStatus(saveStatus, "No keywords or phrases available to save.");
+          saveButtons.innerHTML = '<p class="empty">No save buttons available.</p>';
+          return;
+        }
+
+        for (const item of reviewItems) {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "save-chip";
+          button.textContent = `${item.label}: ${item.itemText}`;
+          button.addEventListener("click", () => saveItem(item.itemText, item.itemType, contextId, button));
+          saveButtons.appendChild(button);
+        }
+
+        setStatus(saveStatus, "Choose a word or phrase to save.");
+      }
+
+      async function saveItem(itemText, itemType, sourceContext, button) {
+        button.disabled = true;
+        setStatus(saveStatus, `Saving ${itemType}: ${itemText}...`);
+
+>>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
         try {
           const response = await fetch(`${API_BASE}/save_item`, {
             method: "POST",
@@ -270,6 +764,7 @@
               source_context: sourceContext,
             }),
           });
+<<<<<<< HEAD
           if (!response.ok) {
             // 422 等错误显式贴出来，避免静默失败。
             dashboardOutput.textContent =
@@ -279,10 +774,24 @@
           await loadDashboard();
         } catch (error) {
           dashboardOutput.textContent = `Save failed: ${error.message}`;
+=======
+
+          const result = await parseJsonResponse(response);
+          if (result.saved !== true) {
+            throw new Error("API response did not include saved: true");
+          }
+
+          setStatus(saveStatus, `Saved ${itemType}: ${itemText}`, "success");
+          await loadDashboard();
+        } catch (error) {
+          button.disabled = false;
+          setStatus(saveStatus, `Could not save item: ${error.message}`, "error");
+>>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
         }
       }
 
       async function loadDashboard() {
+<<<<<<< HEAD
         // Dashboard 输出先保留 JSON 形式，方便后续 CYD 照着字段接 UI。
         try {
           const response = await fetch(`${API_BASE}/dashboard`);
@@ -298,15 +807,104 @@
             `Dashboard failed: ${error.message}\n` +
             `Check that the backend is running at ${API_BASE}.`;
         }
+=======
+        dashboardButton.disabled = true;
+        setStatus(dashboardStatus, "Loading dashboard...");
+
+        try {
+          const response = await fetch(`${API_BASE}/dashboard`);
+          const dashboard = await parseJsonResponse(response);
+          rawDashboardJson.textContent = JSON.stringify(dashboard, null, 2);
+          renderDashboard(dashboard);
+          setStatus(dashboardStatus, "Dashboard loaded.", "success");
+        } catch (error) {
+          rawDashboardJson.textContent = error.message;
+          dashboardOutput.innerHTML = `
+            <div class="panel wide">
+              <p class="status error">Could not load dashboard: ${escapeHtml(error.message)}</p>
+            </div>
+          `;
+          setStatus(dashboardStatus, `Could not load dashboard: ${error.message}`, "error");
+        } finally {
+          dashboardButton.disabled = false;
+        }
+      }
+
+      function renderDashboard(dashboard) {
+        const savedWords = asArray(dashboard.saved_words);
+        const savedPhrases = asArray(dashboard.saved_phrases);
+        const recentKeywords = asArray(dashboard.recent_keywords);
+
+        dashboardOutput.innerHTML = `
+          <div class="panel">
+            <div class="metric">
+              <h3>Review Today</h3>
+              <span class="metric-value">${escapeHtml(dashboard.review_today ?? 0)}</span>
+            </div>
+          </div>
+          <div class="panel">
+            <h3>Top Context</h3>
+            <div class="context-title">${escapeHtml(dashboard.top_context || "None yet")}</div>
+          </div>
+          <div class="panel">
+            <h3>Saved Words</h3>
+            ${renderReviewList(savedWords)}
+          </div>
+          <div class="panel">
+            <h3>Saved Phrases</h3>
+            ${renderReviewList(savedPhrases)}
+          </div>
+          <div class="panel wide">
+            <h3>Recent Keywords</h3>
+            ${renderChips(recentKeywords, "word")}
+          </div>
+        `;
+      }
+
+      function renderReviewList(items) {
+        const values = asArray(items);
+
+        if (!values.length) {
+          return '<p class="empty">No saved items yet.</p>';
+        }
+
+        return `
+          <ul class="item-list">
+            ${values
+              .map(
+                (item) => `
+                  <li>
+                    <strong>${escapeHtml(item.item_text || item)}</strong>
+                    <span class="muted">${escapeHtml(item.source_context || "")}</span>
+                  </li>
+                `,
+              )
+              .join("")}
+          </ul>
+        `;
+      }
+
+      function useDemoInput(key) {
+        const demo = demoInputs[key];
+        if (!demo) return;
+
+        sourceType.value = demo.source;
+        rawText.value = demo.text;
+        renderContextOptions();
+        contextSelect.value = "";
+        setStatus(analysisStatus, `Loaded ${key} demo text.`);
+>>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
       }
 
       sourceType.addEventListener("change", renderContextOptions);
-      document.querySelector("#analyzeButton").addEventListener("click", analyzeText);
-      document.querySelector("#dashboardButton").addEventListener("click", loadDashboard);
+      analyzeButton.addEventListener("click", analyzeText);
+      dashboardButton.addEventListener("click", loadDashboard);
 
-      loadContexts().catch((error) => {
-        resultOutput.textContent = `Could not connect to API: ${error.message}`;
+      document.querySelectorAll("[data-demo]").forEach((button) => {
+        button.addEventListener("click", () => useDemoInput(button.dataset.demo));
       });
+
+      loadContexts();
     </script>
   </body>
 </html>
