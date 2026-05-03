@@ -383,6 +383,8 @@ def add_mock_saved_item(item_text, item_type):
 
 
 def normalize_context(data):
+    # C13：/context/{id} 返回字段可能用 keywords/phrases 或 seed_keywords/seed_phrases，
+    # 这里统一做 fallback 转换，兼容线 A 两种命名方式，CYD UI 层无需关心。
     return {
         "detected_context": {
             "id": data.get("id", "coffee_shop"),
@@ -392,6 +394,82 @@ def normalize_context(data):
         "phrases": data.get("phrases") or data.get("seed_phrases") or MOCK_ANALYSIS["phrases"],
         "summary": data.get("summary", MOCK_ANALYSIS["summary"]),
     }
+
+
+# ==================== C13 API 契约 - 给线 A 的反馈 ====================
+# 以下是 CYD 对各接口字段的最低要求，供线 A 后端参考。
+# 线 C 不要求修改数据库结构，只反馈 CYD 显示层的字段依赖。
+#
+# ── GET /contexts ──────────────────────────────────────────────────────
+#   期望格式：
+#     {"real_world": [{"id": "coffee_shop", "title": "Coffee Shop"}, ...],
+#      "story":      [{"id": "kings_cross",  "title": "King's Cross"}, ...]}
+#   注意：CYD 内部将 real_world（下划线）映射为 real-world（连字符），线 A 无需改动。
+#
+# ── GET /context/{id} ──────────────────────────────────────────────────
+#   接受以下任意一种格式（normalize_context() 统一处理两种命名）：
+#     方案 A：{"id": "...", "title": "...", "keywords": [...], "phrases": [...], "summary": "..."}
+#     方案 B：{"id": "...", "title": "...", "seed_keywords": [...], "seed_phrases": [...], "summary": "..."}
+#   字段长度建议（超出 CYD 会按 C12 常量截断显示）：
+#     keywords  每项建议 ≤ 14 字符（_C12_KW_CHARS），否则按钮文字截断
+#     phrases   每项建议 ≤ 30 字符（_C12_PH_CHARS），否则按钮文字截断
+#     summary   建议 1 句，CYD 只显示第一句前 48 字符（_C12_SUM_CHARS）
+#
+# ── GET /dashboard ─────────────────────────────────────────────────────
+#   期望格式：
+#     {"saved_words":  [{"item_text": "latte"}, ...],
+#      "saved_phrases": [{"item_text": "Can I Get"}, ...],
+#      "top_context":  "coffee_shop",
+#      "review_today": 3}
+#   注意：每个 item 的字段名必须是 item_text（完全匹配），CYD 不做字段别名处理。
+#         top_context 为字符串 context id；review_today 为整数。
+#
+# ── POST /save_item ────────────────────────────────────────────────────
+#   CYD 发送：
+#     {"item_text": "latte", "item_type": "word", "source_context": "coffee_shop"}
+#     item_type 只会是 "word" 或 "phrase"，不会传其他值。
+#   期望返回：{"saved": true}
+#   注意：saved 字段必须为布尔 true（不是字符串 "true"），
+#         否则 CYD 判定失败并显示 "Save failed"。
+
+
+# ==================== C14 Web-CYD 联调点 - 给线 B 的反馈 ====================
+# 线 B 负责 Web 输入和 Web Dashboard。CYD 和 Web 共用同一套后端 API，
+# 通过 GET /dashboard 读取、POST /save_item 写入来保持数据同步。
+# 线 C 不修改 web/index.html，只列出需要线 B 帮忙验证的联调点。
+#
+# ── 共享数据模型 ────────────────────────────────────────────────────────
+#   写入方：Web（用户在网页输入文本提交）和 CYD（用户点击 keyword / phrase 按钮）
+#   读取方：Web Dashboard 和 CYD Dashboard View
+#   数据流：
+#     Web 保存 → POST /save_item → 后端存储
+#                                       ↑ 共用
+#     CYD 保存 → POST /save_item → 后端存储
+#     GET /dashboard ← Web 读取（刷新页面）
+#     GET /dashboard ← CYD 读取（点击 Refresh 按钮）
+#
+# ── 线 B 需要帮忙验证的联调点 ──────────────────────────────────────────
+#   1. Web 保存一个 word 后，CYD 点 Refresh Dashboard 能看到该 word
+#      → CYD 依赖 saved_words[].item_text 字段
+#   2. CYD 点击 keyword 保存 word 后，Web 刷新 Dashboard 能看到该 word
+#      → Web Dashboard 需要展示 saved_words[].item_text
+#   3. CYD 点击 phrase 保存 phrase 后，Web 刷新 Dashboard 能看到该 phrase
+#      → Web Dashboard 需要展示 saved_phrases[].item_text
+#
+# ── Web 页面字段适配 CYD 展示 ──────────────────────────────────────────
+#   CYD 显示的 Dashboard 字段（均来自 GET /dashboard 响应）：
+#     saved_words[].item_text   — 显示为 "Words: latte, milk"
+#     saved_phrases[].item_text — 显示为 "Phrases: Can I Get"
+#     top_context               — 显示为 "Top: coffee_shop"
+#     review_today              — 显示为 "Review Today: 3"
+#   CYD 当前不显示的字段（Web 可自由使用）：
+#     recent_keywords、source_context、created_at 等
+#
+# ── 注意事项 ────────────────────────────────────────────────────────────
+#   - Web 的 POST /save_item 请求也需要包含 source_context 字段，
+#     否则后端无法记录来源 context，top_context 统计可能为空。
+#   - CYD 不读取 Web 页面的任何 HTML / JS 状态，只通过 API 同步数据。
+#   - 线 C 不修改 web/index.html。
 
 
 def init_display():
