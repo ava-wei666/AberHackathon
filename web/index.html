@@ -207,19 +207,36 @@
         resultOutput.textContent = "Analyzing...";
         saveButtons.innerHTML = "";
 
-        const response = await fetch(`${API_BASE}/analyze_text`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            raw_text: rawText.value,
-            source_type: sourceType.value,
-            optional_context: contextSelect.value || null,
-          }),
-        });
+        try {
+          // 加 try/catch 是为了把 fetch / 解析异常显式打到 UI；
+          // 否则后端没启动或 CORS 失败时网页会一直卡在 "Analyzing..."。
+          const response = await fetch(`${API_BASE}/analyze_text`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              raw_text: rawText.value,
+              source_type: sourceType.value,
+              optional_context: contextSelect.value || null,
+            }),
+          });
 
-        latestResult = await response.json();
-        resultOutput.textContent = JSON.stringify(latestResult, null, 2);
-        renderSaveButtons();
+          if (!response.ok) {
+            // 4xx / 5xx 也要让用户看到，比如 422（输入校验失败）。
+            const errorText = await response.text();
+            resultOutput.textContent =
+              `HTTP ${response.status} ${response.statusText}\n${errorText}`;
+            return;
+          }
+
+          latestResult = await response.json();
+          resultOutput.textContent = JSON.stringify(latestResult, null, 2);
+          renderSaveButtons();
+        } catch (error) {
+          // 网络层错误（后端没启动、CORS、断网）走这里。
+          resultOutput.textContent =
+            `Analyze failed: ${error.message}\n` +
+            `Check that the backend is running at ${API_BASE}.`;
+        }
       }
 
       function renderSaveButtons() {
@@ -243,23 +260,44 @@
 
       async function saveItem(itemText, itemType, sourceContext) {
         // 保存复习项后刷新 dashboard，能立刻看到保存结果。
-        await fetch(`${API_BASE}/save_item`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            item_text: itemText,
-            item_type: itemType,
-            source_context: sourceContext,
-          }),
-        });
-        await loadDashboard();
+        try {
+          const response = await fetch(`${API_BASE}/save_item`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              item_text: itemText,
+              item_type: itemType,
+              source_context: sourceContext,
+            }),
+          });
+          if (!response.ok) {
+            // 422 等错误显式贴出来，避免静默失败。
+            dashboardOutput.textContent =
+              `Save failed: HTTP ${response.status}\n${await response.text()}`;
+            return;
+          }
+          await loadDashboard();
+        } catch (error) {
+          dashboardOutput.textContent = `Save failed: ${error.message}`;
+        }
       }
 
       async function loadDashboard() {
         // Dashboard 输出先保留 JSON 形式，方便后续 CYD 照着字段接 UI。
-        const response = await fetch(`${API_BASE}/dashboard`);
-        const dashboard = await response.json();
-        dashboardOutput.textContent = JSON.stringify(dashboard, null, 2);
+        try {
+          const response = await fetch(`${API_BASE}/dashboard`);
+          if (!response.ok) {
+            dashboardOutput.textContent =
+              `Dashboard failed: HTTP ${response.status}\n${await response.text()}`;
+            return;
+          }
+          const dashboard = await response.json();
+          dashboardOutput.textContent = JSON.stringify(dashboard, null, 2);
+        } catch (error) {
+          dashboardOutput.textContent =
+            `Dashboard failed: ${error.message}\n` +
+            `Check that the backend is running at ${API_BASE}.`;
+        }
       }
 
       sourceType.addEventListener("change", renderContextOptions);

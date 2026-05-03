@@ -2,21 +2,21 @@
 
 ## 记录字段
 
-| 字段       | 内容                                                                                                                |
-| -------- | ----------------------------------------------------------------------------------------------------------------- |
-| Line     | `LINE_A`                                                                                                          |
-| Task     | `A16 - 给线 C 的 CYD 联调信息`                                                                                           |
-| 状态       | 已通过                                                                                                               |
-| 执行日期     | `2026-05-03`                                                                                                      |
-| 工作目录     | `C:\hackathon`                                                                                                    |
-| 本地 API   | `http://localhost:8000`                                                                                           |
-| 局域网 API  | `http://10.88.0.183:8000`                                                                                         |
-| 验收方式     | Uvicorn 监听 `0.0.0.0:8000`，Python urllib 端到端跑 CYD 闭环冒烟脚本，覆盖双向同步                                                    |
-| 主要涉及文件   | `backend/cyd_smoke.py`（新增）、`backend/main.py`、`backend/database.py`、`backend/seed_data.json`                       |
-| 本次业务代码改动 | 无业务逻辑改动；新增 `backend/cyd_smoke.py` 给线 C 的 CYD 闭环参考脚本                                                                |
-| 中文注释     | `backend/cyd_smoke.py` 全文中文注释                                                                                     |
-| 文档记录     | `docs/LINE_A_A16_STEPS.md`                                                                                        |
-| 下一步      | A17 Demo 测试文本自测                                                                                                   |
+| 字段       | 内容                                                                                          |
+| -------- | ------------------------------------------------------------------------------------------- |
+| Line     | `LINE_A`                                                                                    |
+| Task     | `A16 - 给线 C 的 CYD 联调信息`                                                                     |
+| 状态       | 已通过                                                                                         |
+| 执行日期     | `2026-05-03`                                                                                |
+| 工作目录     | `C:\hackathon`                                                                              |
+| 本地 API   | `http://localhost:8000`                                                                     |
+| 局域网 API  | `http://10.88.0.183:8000`                                                                   |
+| 验收方式     | Uvicorn 监听 `0.0.0.0:8000`，Python urllib 端到端跑 CYD 闭环冒烟脚本，覆盖双向同步                              |
+| 主要涉及文件   | `backend/cyd_smoke.py`（新增）、`backend/main.py`、`backend/database.py`、`backend/seed_data.json` |
+| 本次业务代码改动 | 无业务逻辑改动；新增 `backend/cyd_smoke.py` 给线 C 的 CYD 闭环参考脚本                                         |
+| 中文注释     | `backend/cyd_smoke.py` 全文中文注释                                                               |
+| 文档记录     | `docs/LINE_A_A16_STEPS.md`                                                                  |
+| 下一步      | A17 Demo 测试文本自测                                                                             |
 
 ## 编号说明
 
@@ -285,42 +285,42 @@ Invoke-RestMethod -Uri "$base/dashboard"
 
 `localhost` 闭环：
 
-| 检查项                              | 结果                                                |
-| -------------------------------- | ------------------------------------------------- |
-| `step1_real_world_ids`           | `coffee_shop,doctor_pharmacy`                     |
-| `step1_story_ids`                | `kings_cross,baker_street`                        |
-| `step2_coffee_shop_card_ok`      | `True,keywords=12,phrases=5`                      |
-| `step2_doctor_pharmacy_card_ok`  | `True,keywords=11,phrases=5`                      |
-| `step2_kings_cross_card_ok`      | `True,keywords=11,phrases=5`                      |
-| `step2_baker_street_card_ok`     | `True,keywords=11,phrases=5`                      |
-| `step3_review_today_before`      | `18`                                              |
-| `step4_cyd_save_word_id`         | `20`，`saved=True`                                 |
-| `step5_cyd_save_phrase_id`       | `21`，`saved=True`                                 |
-| `step6_review_today_after`       | `20`                                              |
-| `step6_word_visible`             | `True`                                            |
-| `step6_phrase_visible`           | `True`                                            |
-| `step6_review_today_delta`       | `2`                                               |
-| `step7_web_save_word_id`         | `22`                                              |
-| `step7_web_word_visible_on_cyd`  | `True`                                            |
-| `smoke_status`                   | `pass`，exit code `0`                              |
+| 检查项                             | 结果                            |
+| ------------------------------- | ----------------------------- |
+| `step1_real_world_ids`          | `coffee_shop,doctor_pharmacy` |
+| `step1_story_ids`               | `kings_cross,baker_street`    |
+| `step2_coffee_shop_card_ok`     | `True,keywords=12,phrases=5`  |
+| `step2_doctor_pharmacy_card_ok` | `True,keywords=11,phrases=5`  |
+| `step2_kings_cross_card_ok`     | `True,keywords=11,phrases=5`  |
+| `step2_baker_street_card_ok`    | `True,keywords=11,phrases=5`  |
+| `step3_review_today_before`     | `18`                          |
+| `step4_cyd_save_word_id`        | `20`，`saved=True`             |
+| `step5_cyd_save_phrase_id`      | `21`，`saved=True`             |
+| `step6_review_today_after`      | `20`                          |
+| `step6_word_visible`            | `True`                        |
+| `step6_phrase_visible`          | `True`                        |
+| `step6_review_today_delta`      | `2`                           |
+| `step7_web_save_word_id`        | `22`                          |
+| `step7_web_word_visible_on_cyd` | `True`                        |
+| `smoke_status`                  | `pass`，exit code `0`          |
 
 局域网 `http://10.88.0.183:8000` 闭环：
 
-| 检查项                              | 结果                                                |
-| -------------------------------- | ------------------------------------------------- |
-| `step1_real_world_ids`           | `coffee_shop,doctor_pharmacy`                     |
-| `step1_story_ids`                | `kings_cross,baker_street`                        |
-| `step2_*_card_ok`                | 4 个 context 全部通过，`keywords/phrases` 数量与本机一致      |
-| `step3_review_today_before`      | `21`（=本机闭环结束后的 19 + Web 保存的 1 + 本机 step7 的 1）   |
-| `step4_cyd_save_word_id`         | `23`，`saved=True`                                 |
-| `step5_cyd_save_phrase_id`       | `24`，`saved=True`                                 |
-| `step6_review_today_after`       | `23`                                              |
-| `step6_word_visible`             | `True`                                            |
-| `step6_phrase_visible`           | `True`                                            |
-| `step6_review_today_delta`       | `2`                                               |
-| `step7_web_save_word_id`         | `25`                                              |
-| `step7_web_word_visible_on_cyd`  | `True`                                            |
-| `smoke_status`                   | `pass`，exit code `0`                              |
+| 检查项                             | 结果                                            |
+| ------------------------------- | --------------------------------------------- |
+| `step1_real_world_ids`          | `coffee_shop,doctor_pharmacy`                 |
+| `step1_story_ids`               | `kings_cross,baker_street`                    |
+| `step2_*_card_ok`               | 4 个 context 全部通过，`keywords/phrases` 数量与本机一致   |
+| `step3_review_today_before`     | `21`（=本机闭环结束后的 19 + Web 保存的 1 + 本机 step7 的 1） |
+| `step4_cyd_save_word_id`        | `23`，`saved=True`                             |
+| `step5_cyd_save_phrase_id`      | `24`，`saved=True`                             |
+| `step6_review_today_after`      | `23`                                          |
+| `step6_word_visible`            | `True`                                        |
+| `step6_phrase_visible`          | `True`                                        |
+| `step6_review_today_delta`      | `2`                                           |
+| `step7_web_save_word_id`        | `25`                                          |
+| `step7_web_word_visible_on_cyd` | `True`                                        |
+| `smoke_status`                  | `pass`，exit code `0`                          |
 
 完整 stdout（节选 localhost）：
 
@@ -350,11 +350,11 @@ smoke_status=pass
 
 ## 数据库影响
 
-| 表名                 | 写入变化                                                            |
-| ------------------ | --------------------------------------------------------------- |
-| `contexts`         | 无新增                                                             |
-| `analysis_results` | 无新增（CYD 闭环不调用 `/analyze_text`）                                  |
-| `review_items`     | 新增 6 条（每次闭环写 3 条：CYD word + CYD phrase + Web word；本机和局域网各跑一次）  |
+| 表名                 | 写入变化                                                          |
+| ------------------ | ------------------------------------------------------------- |
+| `contexts`         | 无新增                                                           |
+| `analysis_results` | 无新增（CYD 闭环不调用 `/analyze_text`）                                |
+| `review_items`     | 新增 6 条（每次闭环写 3 条：CYD word + CYD phrase + Web word；本机和局域网各跑一次） |
 
 最终 DB 计数：
 
@@ -386,8 +386,8 @@ today_reviews=24
    - laptop Uvicorn 是否用 `--host 0.0.0.0` 启动。
    - CYD 是否连了同一个 Wi-Fi / hotspot（校园网常见的客户端隔离会拦截设备互访）。
    - Windows 防火墙是否放行 TCP 8000（管理员 PowerShell 加规则，命令见上文）。
-4. CYD 显示不下的字段直接告诉线 A，看是否压缩 `summary` 或拆分 dashboard，**不要**在 CYD 端做加工。
-5. CYD 不要直接读 SQLite，所有数据走 `GET /dashboard` 与 `GET /context/{id}`。
+1. CYD 显示不下的字段直接告诉线 A，看是否压缩 `summary` 或拆分 dashboard，**不要**在 CYD 端做加工。
+2. CYD 不要直接读 SQLite，所有数据走 `GET /dashboard` 与 `GET /context/{id}`。
 
 ## 服务状态记录
 

@@ -2,21 +2,21 @@
 
 ## 记录字段
 
-| 字段       | 内容                                                                                                                |
-| -------- | ----------------------------------------------------------------------------------------------------------------- |
-| Line     | `LINE_A`                                                                                                          |
-| Task     | `A15 - 给线 B 的联调信息`                                                                                                |
-| 状态       | 已通过                                                                                                               |
-| 执行日期     | `2026-05-03`                                                                                                      |
-| 工作目录     | `C:\hackathon`                                                                                                    |
-| 本地 API   | `http://localhost:8000`                                                                                           |
-| 局域网 API  | `http://10.88.0.183:8000`                                                                                         |
-| 验收方式     | Uvicorn 监听 `0.0.0.0:8000`，Python urllib 端到端跑 Web 闭环冒烟脚本                                                            |
-| 主要涉及文件   | `backend/web_smoke.py`（新增）、`backend/main.py`、`backend/database.py`、`backend/nlp_engine.py`                         |
-| 本次业务代码改动 | 无业务逻辑改动；新增 `backend/web_smoke.py` 给线 B 的闭环参考脚本                                                                     |
-| 中文注释     | `backend/web_smoke.py` 全文中文注释                                                                                     |
-| 文档记录     | `docs/LINE_A_A15_STEPS.md`                                                                                        |
-| 下一步      | A16 给线 C 的 CYD 联调信息                                                                                                |
+| 字段       | 内容                                                                                         |
+| -------- | ------------------------------------------------------------------------------------------ |
+| Line     | `LINE_A`                                                                                   |
+| Task     | `A15 - 给线 B 的联调信息`                                                                         |
+| 状态       | 已通过                                                                                        |
+| 执行日期     | `2026-05-03`                                                                               |
+| 工作目录     | `C:\hackathon`                                                                             |
+| 本地 API   | `http://localhost:8000`                                                                    |
+| 局域网 API  | `http://10.88.0.183:8000`                                                                  |
+| 验收方式     | Uvicorn 监听 `0.0.0.0:8000`，Python urllib 端到端跑 Web 闭环冒烟脚本                                    |
+| 主要涉及文件   | `backend/web_smoke.py`（新增）、`backend/main.py`、`backend/database.py`、`backend/nlp_engine.py` |
+| 本次业务代码改动 | 无业务逻辑改动；新增 `backend/web_smoke.py` 给线 B 的闭环参考脚本                                             |
+| 中文注释     | `backend/web_smoke.py` 全文中文注释                                                              |
+| 文档记录     | `docs/LINE_A_A15_STEPS.md`                                                                 |
+| 下一步      | A16 给线 C 的 CYD 联调信息                                                                        |
 
 ## 编号说明
 
@@ -251,41 +251,41 @@ Invoke-RestMethod -Uri "$base/dashboard"
 
 `localhost` 闭环：
 
-| 检查项                     | 结果                                                |
-| ----------------------- | ------------------------------------------------- |
-| `step1_health_status`   | `ok`                                              |
-| `step1_health_service`  | `SceneLingo API`                                  |
-| `step2_real_world_ids`  | `coffee_shop,doctor_pharmacy`                     |
-| `step2_story_ids`       | `kings_cross,baker_street`                        |
-| `step3_coffee_shop`     | `coffee_shop`                                     |
-| `step3_doctor_pharmacy` | `doctor_pharmacy`                                 |
-| `step3_kings_cross`     | `kings_cross`                                     |
-| `step3_baker_street`    | `baker_street`                                    |
-| `step4_save_word`       | `get`，`id=16`，`saved=True`                        |
-| `step4_save_phrase`     | `Can I Get`，`id=17`，`saved=True`                  |
-| `step5_word_visible`    | `True`                                            |
-| `step5_phrase_visible`  | `True`                                            |
-| `step5_review_today`    | `16`                                              |
-| `smoke_status`          | `pass`，exit code `0`                              |
+| 检查项                     | 结果                               |
+| ----------------------- | -------------------------------- |
+| `step1_health_status`   | `ok`                             |
+| `step1_health_service`  | `SceneLingo API`                 |
+| `step2_real_world_ids`  | `coffee_shop,doctor_pharmacy`    |
+| `step2_story_ids`       | `kings_cross,baker_street`       |
+| `step3_coffee_shop`     | `coffee_shop`                    |
+| `step3_doctor_pharmacy` | `doctor_pharmacy`                |
+| `step3_kings_cross`     | `kings_cross`                    |
+| `step3_baker_street`    | `baker_street`                   |
+| `step4_save_word`       | `get`，`id=16`，`saved=True`       |
+| `step4_save_phrase`     | `Can I Get`，`id=17`，`saved=True` |
+| `step5_word_visible`    | `True`                           |
+| `step5_phrase_visible`  | `True`                           |
+| `step5_review_today`    | `16`                             |
+| `smoke_status`          | `pass`，exit code `0`             |
 
 局域网 `http://10.88.0.183:8000` 闭环：
 
-| 检查项                     | 结果                                                |
-| ----------------------- | ------------------------------------------------- |
-| `step1_health_status`   | `ok`                                              |
-| `step1_health_service`  | `SceneLingo API`                                  |
-| `step2_real_world_ids`  | `coffee_shop,doctor_pharmacy`                     |
-| `step2_story_ids`       | `kings_cross,baker_street`                        |
-| `step3_coffee_shop`     | `coffee_shop`                                     |
-| `step3_doctor_pharmacy` | `doctor_pharmacy`                                 |
-| `step3_kings_cross`     | `kings_cross`                                     |
-| `step3_baker_street`    | `baker_street`                                    |
-| `step4_save_word`       | `get`，`id=18`，`saved=True`                        |
-| `step4_save_phrase`     | `Can I Get`，`id=19`，`saved=True`                  |
-| `step5_word_visible`    | `True`                                            |
-| `step5_phrase_visible`  | `True`                                            |
-| `step5_review_today`    | `18`                                              |
-| `smoke_status`          | `pass`，exit code `0`                              |
+| 检查项                     | 结果                               |
+| ----------------------- | -------------------------------- |
+| `step1_health_status`   | `ok`                             |
+| `step1_health_service`  | `SceneLingo API`                 |
+| `step2_real_world_ids`  | `coffee_shop,doctor_pharmacy`    |
+| `step2_story_ids`       | `kings_cross,baker_street`       |
+| `step3_coffee_shop`     | `coffee_shop`                    |
+| `step3_doctor_pharmacy` | `doctor_pharmacy`                |
+| `step3_kings_cross`     | `kings_cross`                    |
+| `step3_baker_street`    | `baker_street`                   |
+| `step4_save_word`       | `get`，`id=18`，`saved=True`       |
+| `step4_save_phrase`     | `Can I Get`，`id=19`，`saved=True` |
+| `step5_word_visible`    | `True`                           |
+| `step5_phrase_visible`  | `True`                           |
+| `step5_review_today`    | `18`                             |
+| `smoke_status`          | `pass`，exit code `0`             |
 
 完整 stdout（节选）：
 
@@ -316,11 +316,11 @@ smoke_status=pass
 
 ## 数据库影响
 
-| 表名                 | 写入变化                                              |
-| ------------------ | ------------------------------------------------- |
-| `contexts`         | 无新增                                               |
-| `analysis_results` | 新增 8 条（`localhost` 4 段 + 局域网 4 段 demo）           |
-| `review_items`     | 新增 4 条（`get` ×2 word，`Can I Get` ×2 phrase）       |
+| 表名                 | 写入变化                                        |
+| ------------------ | ------------------------------------------- |
+| `contexts`         | 无新增                                         |
+| `analysis_results` | 新增 8 条（`localhost` 4 段 + 局域网 4 段 demo）      |
+| `review_items`     | 新增 4 条（`get` ×2 word，`Can I Get` ×2 phrase） |
 
 最终 DB 计数：
 
