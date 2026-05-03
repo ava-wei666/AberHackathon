@@ -28,6 +28,35 @@ AUTO_CONNECT_WIFI = False
 # 后续 C11 真实 API 联调时，把这里改成 False 即可复用同一套 UI 结构。
 USE_MOCK_DATA = True
 
+# ==================== C11 联调切换指南 ====================
+# 切换到真实 API 只需修改以下 4 项（切勿把真实密码和 IP 提交到 Git）：
+#
+#   API_BASE         = "http://<laptop 局域网 IP>:8000"
+#   WIFI_SSID        = "<Wi-Fi 名称>"
+#   WIFI_PASSWORD    = "<Wi-Fi 密码>"
+#   AUTO_CONNECT_WIFI = True
+#   USE_MOCK_DATA    = False
+#
+# 后端启动命令（在 laptop 上执行）：
+#   uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+#
+# 查找 laptop 局域网 IP：
+#   Windows : ipconfig  -> 找 "IPv4 地址"
+#   Mac/Linux: ifconfig -> 找 "inet "
+#
+# 联调顺序（C11 验收步骤）：
+#   1. CYD 进入 Dashboard，点 Refresh -> 看到真实数据
+#   2. Web 保存一个 word
+#   3. CYD Refresh Dashboard -> 看到 Web 保存的 word
+#   4. CYD 点击 keyword 保存 phrase
+#   5. Web Refresh Dashboard -> 看到 CYD 保存的 phrase
+#
+# 遇到 API probe FAILED：
+#   - 后端是否用 --host 0.0.0.0 启动
+#   - CYD 和 laptop 是否同一 Wi-Fi
+#   - API_BASE 是否是 laptop 局域网 IP（不是 localhost）
+#   - Windows 防火墙是否拦截 8000 端口
+
 
 # ==================== CYD 显示 / 触摸配置 ====================
 # 这些引脚和方向参数沿用 C0 的 touch_color_test.py，避免改坏硬件初始化路径。
@@ -52,6 +81,18 @@ _DISPLAY_BUS_FREQ = const(24000000)
 _DISPLAY_BUS_DC = const(2)
 _DISPLAY_BUS_CS = const(15)
 _DISPLAY_BACKLIGHT_PIN = const(21)
+
+
+# ==================== C12 小屏幕显示规则常量 ====================
+# C12 要求：每屏最多 3-5 个主要元素，按钮要大，长文本优先截断。
+# 所有截断和上限统一从这里读取，修改一处即影响所有页面，不需要逐页调整。
+_C12_MAX_KW      = const(5)   # 每屏 keyword 上限（Insight View）
+_C12_MAX_PH      = const(3)   # 每屏 phrase 上限（Insight View / Dashboard）
+_C12_MAX_WORDS   = const(5)   # Dashboard saved_words 最多显示条数
+_C12_KW_CHARS    = const(14)  # keyword 按钮文本截断长度（适配 108px 宽按钮）
+_C12_PH_CHARS    = const(30)  # phrase 按钮文本截断长度（适配 210px 宽按钮）
+_C12_SUM_CHARS   = const(48)  # summary 截断长度（最多 1 句）
+_C12_LABEL_CHARS = const(40)  # Dashboard 普通标签文本截断长度
 
 
 # ==================== Mock 数据 ====================
@@ -300,6 +341,10 @@ def fetch_dashboard():
 
 
 def save_item(item_text, item_type, source_context):
+    # C10 要求 payload 必须包含三个字段：
+    #   item_text    — 保存的词或短语原文
+    #   item_type    — 必须是 "word" 或 "phrase"，不能传错
+    #   source_context — 当前 context 的 id（如 "coffee_shop"）
     payload = {
         "item_text": item_text,
         "item_type": item_type,
@@ -307,6 +352,8 @@ def save_item(item_text, item_type, source_context):
     }
 
     result = api_post("/save_item", payload)
+    # mock 模式下同步更新内存中的 MOCK_DASHBOARD，
+    # 保证点击保存后立刻 Refresh Dashboard 能看到新条目。
     if USE_MOCK_DATA and result and result.get("saved"):
         add_mock_saved_item(item_text, item_type)
     return result
@@ -324,7 +371,10 @@ def mock_context(context_id):
 
 
 def add_mock_saved_item(item_text, item_type):
-    # mock 保存只更新内存里的 dashboard，方便 C3 阶段点击后立刻看到 Refresh 效果。
+    # mock 模式下在内存中模拟后端保存行为：
+    # word 插入 saved_words 列表头部，phrase 插入 saved_phrases 列表头部。
+    # review_today 递增，保证 Dashboard 每次保存后统计数字有变化。
+    # 注意：这只影响内存，重启设备后数据丢失（mock 不持久化）。
     if item_type == "word":
         MOCK_DASHBOARD["saved_words"].insert(0, {"item_text": item_text})
     elif item_type == "phrase":
@@ -431,11 +481,12 @@ def add_label(parent, text, y, height=28):
     return label
 
 
-def add_button(parent, text, y, cb, width=190, height=44):
+def add_button(parent, text, y, cb, width=190, height=44, x_ofs=0):
     # 统一的大按钮，方便手指点击，也方便后续 C5-C10 复用。
+    # x_ofs 支持水平偏移，C8 keyword 2 列布局使用 ±59px 偏移实现双列。
     btn = lv.button(parent)
     btn.set_size(width, height)
-    btn.align(lv.ALIGN.TOP_MID, 0, y)
+    btn.align(lv.ALIGN.TOP_MID, x_ofs, y)
     btn.set_style_bg_color(lv.color_hex(0x2F6FED), lv.PART.MAIN)
     btn.set_style_radius(6, lv.PART.MAIN)
     btn.remove_flag(lv.obj.FLAG.SCROLLABLE)
@@ -606,86 +657,197 @@ def open_context(context_id):
     go_to("insight", data)
 
 
+# ==================== C8 Insight View ====================
+# C8 要求：context 标题 + 至少 5 个可点击 keyword（保存为 word）
+#          + 至少 3 个可点击 phrase（保存为 phrase）+ summary + Back。
+# keyword 采用 2 列布局（每列宽 108px，x 偏移 ±59px）节省纵向空间。
+# phrase 采用全宽按钮（210px）保证长文本可读，截断到 30 字符防止撑破布局。
+# summary 只取第一句最多 48 字符，避免占用过多纵向空间。
+
 def _render_insight(data):
     global status_label
     data = data or MOCK_ANALYSIS
     context = data.get("detected_context", {})
     context_id = context.get("id", "coffee_shop")
     title = context.get("title", "Context")
-    keywords = (data.get("keywords") or [])[:5]
-    phrases = (data.get("phrases") or [])[:3]
+    # C12 规则：keyword 最多 _C12_MAX_KW 个，超出部分不显示，防止超出屏幕高度。
+    keywords = (data.get("keywords") or [])[:_C12_MAX_KW]
+    # C12 规则：phrase 最多 _C12_MAX_PH 个。
+    phrases = (data.get("phrases") or [])[:_C12_MAX_PH]
     summary = data.get("summary", "")
 
     scr = lv.obj()
     set_common_screen(scr)
+
+    # 页面标题显示 context 名称（例如 "Coffee Shop"）。
     add_title(scr, title)
-    add_label(scr, "Keywords", 46, 22)
 
-    keyword_text = "  ".join(keywords) if keywords else "No keywords"
-    add_button(scr, keyword_text[:38], 74,
-               lambda: handle_save(keywords[0] if keywords else "", "word", context_id), 212, 38)
+    # "Top Keywords" 区块标签，灰色小字，与按钮区分视觉层级。
+    kw_hdr = add_label(scr, "Top Keywords", 36, 16)
+    kw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
 
-    add_label(scr, "Phrases", 122, 22)
-    phrase_text = " | ".join(phrases) if phrases else "No phrases"
-    add_button(scr, phrase_text[:38], 150,
-               lambda: handle_save(phrases[0] if phrases else "", "phrase", context_id), 212, 38)
+    # keyword 按钮 2 列排列：偶数索引左列（x=-59），奇数索引右列（x=+59）。
+    # 每 2 个关键词占一行，行高 30px。
+    # 用 lambda 默认参数捕获 kw，避免闭包陷阱（同 C7 context 按钮写法）。
+    y_kw = 55
+    for i, kw in enumerate(keywords):
+        if i > 0 and i % 2 == 0:
+            y_kw += 30
+        x_ofs = -59 if i % 2 == 0 else 59
+        # C12：keyword 文本截断到 _C12_KW_CHARS 字符，适配 108px 按钮宽度。
+        add_button(scr, kw[:_C12_KW_CHARS], y_kw,
+                   lambda kw=kw: handle_save(kw, "word", context_id),
+                   108, 26, x_ofs)
 
-    add_label(scr, summary[:95], 200, 42)
-    status_label = add_label(scr, "", 244, 20)
-    add_button(scr, "Back", 270, go_back, 90, 36)
+    # "Useful Phrases" 区块标签。
+    y_ph_hdr = y_kw + 30
+    ph_hdr = add_label(scr, "Useful Phrases", y_ph_hdr, 16)
+    ph_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+
+    # phrase 按钮全宽（210px），截断到 30 字符防止长 phrase 撑破布局。
+    # 用 lambda 默认参数捕获 ph，避免闭包陷阱。
+    y_ph = y_ph_hdr + 18
+    for ph in phrases:
+        # C12：phrase 文本截断到 _C12_PH_CHARS 字符，防止长 phrase 撑破 210px 按钮。
+        add_button(scr, ph[:_C12_PH_CHARS], y_ph,
+                   lambda ph=ph: handle_save(ph, "phrase", context_id),
+                   210, 26)
+        y_ph += 28
+
+    # C12：summary 只取第一句，截断到 _C12_SUM_CHARS 字符（最多 1 句）。
+    summary_short = (summary.split(".")[0])[:_C12_SUM_CHARS] if summary else ""
+    add_label(scr, summary_short, y_ph + 4, 16)
+
+    # 状态行：显示保存结果，供 handle_save() 回写（Saved / Save failed 等）。
+    status_label = add_label(scr, "", y_ph + 22, 14)
+
+    # Back 按钮固定在状态行下方，返回 Context Select。
+    add_button(scr, "Back", y_ph + 38, go_back, 90, 28)
+
     lv.screen_load(scr)
 
 
+# ==================== C10 Save Interaction ====================
+# C10 要求：点击 keyword 保存为 word，点击 phrase 保存为 phrase。
+# item_type 必须正确传入（"word" / "phrase"），source_context 为当前 context id。
+# 保存成功显示 "Saved: <item>"，保存失败显示 "Save failed"，页面不崩溃。
+# 按钮回调 -> handle_save() -> save_item() -> api_post("/save_item", payload)。
+
 def handle_save(item_text, item_type, source_context):
+    # 空文本不发请求（例如 mock 数据中 keyword 列表为空时的防御）。
     if not item_text:
         set_status("Nothing to save")
         return
 
+    # C10 核心：调用 save_item() 向后端发送 POST /save_item。
+    # item_type 必须是 "word" 或 "phrase"，由调用方（按钮回调）保证传入正确值。
     result = save_item(item_text, item_type, source_context)
+
     if result and result.get("saved"):
-        set_status("Saved")
-    elif USE_MOCK_DATA:
-        set_status("Saved mock")
+        # 成功时显示保存的内容前 12 字符，方便用户确认点的是哪个词。
+        set_status("Saved: " + item_text[:12])
     else:
-        # 真实 API 失败时明确提示失败，但页面继续可用。
+        # 真实 API 失败时明确提示，但 Insight View 保持可用，不崩溃不跳页。
         set_status("Save failed")
 
 
+# ==================== C11 API 联调辅助 ====================
+# C11 在真实 API 模式下，启动时调用 probe_api() 快速验证后端可达。
+# 结果只打印到串口（mpremote / Thonny REPL），不影响 UI 启动流程。
+
+def probe_api():
+    # 发一次 GET /dashboard 作为连通性探测。
+    # 成功返回 True，失败返回 False；失败时打印排查提示，但不阻塞 UI。
+    print("--> C11 probe:", API_BASE + "/dashboard")
+    result = api_get("/dashboard")
+    if result is not None:
+        print("--> API probe OK")
+        return True
+    print("--> API probe FAILED. Check: API_BASE / Wi-Fi / firewall / --host 0.0.0.0")
+    return False
+
+
+# ==================== C9 Dashboard View ====================
+# C9 要求：分区显示 Saved Words / Saved Phrases / Top Context / Review Today，
+# 以及 Refresh（重新拉取 /dashboard）和 Back 按钮。
+# Refresh 直接复用 _render_dashboard()，不需要额外封装。
+# 网络失败时 fetch_dashboard() 自动 fallback 到 MOCK_DASHBOARD，页面不黑屏。
+
 def _render_dashboard():
     global status_label
-    data = fetch_dashboard()
-    words = data.get("saved_words", [])[:3]
-    phrases = data.get("saved_phrases", [])[:2]
-    top_context = data.get("top_context") or "-"
-    review_today = data.get("review_today", 0)
 
-    word_text = ", ".join([item.get("item_text", "") for item in words]) or "-"
-    phrase_text = ", ".join([item.get("item_text", "") for item in phrases]) or "-"
+    # fetch_dashboard() 在网络失败时返回 MOCK_DASHBOARD，保证此处不为 None。
+    data = fetch_dashboard()
+
+    # C12 规则：saved words 最多显示 _C12_MAX_WORDS 个，小屏幕不宜过多。
+    words = data.get("saved_words", [])[:_C12_MAX_WORDS]
+    # C12 规则：saved phrases 最多显示 _C12_MAX_PH 个。
+    phrases = data.get("saved_phrases", [])[:_C12_MAX_PH]
+    top_context = str(data.get("top_context") or "-")
+    review_today = str(data.get("review_today", 0))
+
+    # 将列表转为逗号分隔文本，C12 规则截断到 _C12_LABEL_CHARS 字符防止换行过多。
+    word_text = ", ".join(item.get("item_text", "") for item in words) or "None yet"
+    phrase_text = ", ".join(item.get("item_text", "") for item in phrases) or "None yet"
 
     scr = lv.obj()
     set_common_screen(scr)
+
+    # 页面标题。
     add_title(scr, "Dashboard")
-    add_label(scr, "Words: " + word_text[:32], 52, 34)
-    add_label(scr, "Phrases: " + phrase_text[:30], 94, 34)
-    add_label(scr, "Top: " + str(top_context)[:28], 136, 28)
-    add_label(scr, "Review Today: " + str(review_today), 172, 28)
-    status_label = add_label(scr, "", 210, 22)
-    add_button(scr, "Refresh", 232, lambda: _render_dashboard(), 105, 36)
-    add_button(scr, "Back", 272, go_back, 90, 36)
+
+    # Saved Words 区块：灰色小标题 + 内容标签（可换行，高 32px）。
+    sw_hdr = add_label(scr, "Saved Words", 36, 16)
+    sw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    # C12：标签文本截断到 _C12_LABEL_CHARS 字符，防止换行挤占其他元素空间。
+    add_label(scr, word_text[:_C12_LABEL_CHARS], 55, 32)
+
+    # Saved Phrases 区块：灰色小标题 + 内容标签。
+    sp_hdr = add_label(scr, "Saved Phrases", 92, 16)
+    sp_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    add_label(scr, phrase_text[:_C12_LABEL_CHARS], 111, 32)
+
+    # 统计信息：Top Context 和 Review Today。
+    add_label(scr, "Top: " + top_context[:24], 148, 22)
+    add_label(scr, "Review Today: " + review_today, 174, 22)
+
+    # 数据来源状态行：mock 模式显示 "mock"，真实 API 显示 "live"。
+    # 方便联调时快速确认 CYD 拿到的是 mock 还是真实数据。
+    source = "mock" if USE_MOCK_DATA else "live"
+    status_label = add_label(scr, source, 200, 16)
+    status_label.set_style_text_color(lv.color_hex(0x8899AA), 0)
+
+    # Refresh 和 Back 并排放在底部，节省纵向空间。
+    # Refresh 左偏 x=-57，重新调用 _render_dashboard() 拉取最新 /dashboard 数据。
+    add_button(scr, "Refresh", 222, lambda: _render_dashboard(), 106, 38, -57)
+    # Back 右偏 x=+57，返回上一页（通常是 Home）。
+    add_button(scr, "Back", 222, go_back, 90, 38, 57)
+
     lv.screen_load(scr)
 
 
 def main():
     gc.collect()
     init_display()
+
+    # Wi-Fi 连接（C11 真实 API 模式下必须开启，mock 模式可跳过）。
     if AUTO_CONNECT_WIFI:
         connect_wifi()
+
+    # C11：真实 API 模式下启动时探测后端连通性，结果打印到串口方便排查。
+    # mock 模式下跳过探测，保证离线也能正常启动。
+    if not USE_MOCK_DATA:
+        probe_api()
+
     show_home()
 
+    # 启动诊断信息，方便联调时通过串口快速确认环境。
     print("--> SceneLingo CYD dashboard ready.")
-    print("--> Micropython Version:", os.uname().release)
-    print("--> LVGL Version: %s.%s" % (lv.version_major(), lv.version_minor()))
+    print("--> MicroPython:", os.uname().release)
+    print("--> LVGL: %s.%s" % (lv.version_major(), lv.version_minor()))
     print("--> API_BASE:", API_BASE)
+    print("--> USE_MOCK_DATA:", USE_MOCK_DATA)
+    print("--> AUTO_CONNECT_WIFI:", AUTO_CONNECT_WIFI)
 
 
 main()
