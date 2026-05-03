@@ -690,27 +690,61 @@ def handle_save(item_text, item_type, source_context):
         set_status("Save failed")
 
 
+# ==================== C9 Dashboard View ====================
+# C9 要求：分区显示 Saved Words / Saved Phrases / Top Context / Review Today，
+# 以及 Refresh（重新拉取 /dashboard）和 Back 按钮。
+# Refresh 直接复用 _render_dashboard()，不需要额外封装。
+# 网络失败时 fetch_dashboard() 自动 fallback 到 MOCK_DASHBOARD，页面不黑屏。
+
 def _render_dashboard():
     global status_label
-    data = fetch_dashboard()
-    words = data.get("saved_words", [])[:3]
-    phrases = data.get("saved_phrases", [])[:2]
-    top_context = data.get("top_context") or "-"
-    review_today = data.get("review_today", 0)
 
-    word_text = ", ".join([item.get("item_text", "") for item in words]) or "-"
-    phrase_text = ", ".join([item.get("item_text", "") for item in phrases]) or "-"
+    # fetch_dashboard() 在网络失败时返回 MOCK_DASHBOARD，保证此处不为 None。
+    data = fetch_dashboard()
+
+    # C9 最多显示 5 个 saved words，小屏幕限制不宜过多。
+    words = data.get("saved_words", [])[:5]
+    # C9 最多显示 3 个 saved phrases。
+    phrases = data.get("saved_phrases", [])[:3]
+    top_context = str(data.get("top_context") or "-")
+    review_today = str(data.get("review_today", 0))
+
+    # 将列表转为逗号分隔文本，截断防止换行过多。
+    word_text = ", ".join(item.get("item_text", "") for item in words) or "None yet"
+    phrase_text = ", ".join(item.get("item_text", "") for item in phrases) or "None yet"
 
     scr = lv.obj()
     set_common_screen(scr)
+
+    # 页面标题。
     add_title(scr, "Dashboard")
-    add_label(scr, "Words: " + word_text[:32], 52, 34)
-    add_label(scr, "Phrases: " + phrase_text[:30], 94, 34)
-    add_label(scr, "Top: " + str(top_context)[:28], 136, 28)
-    add_label(scr, "Review Today: " + str(review_today), 172, 28)
-    status_label = add_label(scr, "", 210, 22)
-    add_button(scr, "Refresh", 232, lambda: _render_dashboard(), 105, 36)
-    add_button(scr, "Back", 272, go_back, 90, 36)
+
+    # Saved Words 区块：灰色小标题 + 内容标签（可换行，高 32px）。
+    sw_hdr = add_label(scr, "Saved Words", 36, 16)
+    sw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    add_label(scr, word_text[:40], 55, 32)
+
+    # Saved Phrases 区块：灰色小标题 + 内容标签。
+    sp_hdr = add_label(scr, "Saved Phrases", 92, 16)
+    sp_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    add_label(scr, phrase_text[:40], 111, 32)
+
+    # 统计信息：Top Context 和 Review Today。
+    add_label(scr, "Top: " + top_context[:24], 148, 22)
+    add_label(scr, "Review Today: " + review_today, 174, 22)
+
+    # 数据来源状态行：mock 模式显示 "mock"，真实 API 显示 "live"。
+    # 方便联调时快速确认 CYD 拿到的是 mock 还是真实数据。
+    source = "mock" if USE_MOCK_DATA else "live"
+    status_label = add_label(scr, source, 200, 16)
+    status_label.set_style_text_color(lv.color_hex(0x8899AA), 0)
+
+    # Refresh 和 Back 并排放在底部，节省纵向空间。
+    # Refresh 左偏 x=-57，重新调用 _render_dashboard() 拉取最新 /dashboard 数据。
+    add_button(scr, "Refresh", 222, lambda: _render_dashboard(), 106, 38, -57)
+    # Back 右偏 x=+57，返回上一页（通常是 Home）。
+    add_button(scr, "Back", 222, go_back, 90, 38, 57)
+
     lv.screen_load(scr)
 
 
