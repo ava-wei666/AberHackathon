@@ -2,3 +2,4 @@
 __pycache__/
 *.pyc
 scenelingo.db
+.uvicorn_*.log
