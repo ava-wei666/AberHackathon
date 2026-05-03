@@ -524,15 +524,33 @@ def _render_route(route, arg=None):
         _render_home()
 
 
+# ==================== C6 Home Screen ====================
+# C6 要求：三个大按钮，文案不挤出屏幕，手指可以点中。
+# 屏幕布局从上到下：标题 -> 副标题 -> Real-world -> Story -> Dashboard -> 状态行。
+
 def _render_home():
     scr = lv.obj()
     set_common_screen(scr)
+
+    # 主标题居中，字体沿用默认大字体，保证在小屏幕上清晰可读。
     add_title(scr, "SceneLingo")
-    add_button(scr, "Real-world", 72, lambda: go_to("context_select", "real-world"))
-    add_button(scr, "Story", 128, lambda: go_to("context_select", "story"))
-    add_button(scr, "Dashboard", 184, lambda: go_to("dashboard"))
+
+    # 副标题提示用户这是场景化英语学习工具，文字短小不占位。
+    sub = add_label(scr, "Learn English in Context", 46, 22)
+    sub.set_style_text_color(lv.color_hex(0x8899AA), 0)
+
+    # 三个主按钮间距 56px，保证手指不会误点相邻按钮。
+    # Real-world 进入真实场景的 Context Select。
+    add_button(scr, "Real-world", 86, lambda: go_to("context_select", "real-world"))
+    # Story 进入故事场景的 Context Select。
+    add_button(scr, "Story", 146, lambda: go_to("context_select", "story"))
+    # Dashboard 直接跳转到复习列表页面。
+    add_button(scr, "Dashboard", 206, lambda: go_to("dashboard"))
+
+    # 底部状态行：Mock 模式显示 "Mock"，真实 API 模式显示后端 IP，方便联调时确认。
     mode = "Mock" if USE_MOCK_DATA else "API " + API_BASE.replace("http://", "")
-    add_label(scr, mode, 252, 42)
+    add_label(scr, mode, 268, 28)
+
     lv.screen_load(scr)
 
 
