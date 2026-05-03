@@ -73,7 +73,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="SceneLingo API", version="0.1.0", lifespan=lifespan)
+app = FastAPI(title="Scene Words API", version="0.1.0", lifespan=lifespan)
 
 # Hackathon 本地联调阶段允许跨域，方便手机网页、电脑网页和 CYD 同时访问 laptop 后端。
 app.add_middleware(
@@ -88,7 +88,7 @@ app.add_middleware(
 @app.get("/")
 def health_check() -> dict[str, str]:
     # 最简单的健康检查接口，用来确认后端服务已经起来。
-    return {"status": "ok", "service": "SceneLingo API"}
+    return {"status": "ok", "service": "Scene Words API"}
 
 
 @app.post("/analyze_text")

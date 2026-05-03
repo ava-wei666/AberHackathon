@@ -662,7 +662,7 @@ def _render_home():
     set_common_screen(scr)
 
     # 主标题居中，字体沿用默认大字体，保证在小屏幕上清晰可读。
-    add_title(scr, "SceneLingo")
+    add_title(scr, "Scene Words")
 
     # 副标题提示用户这是场景化英语学习工具，文字短小不占位。
     sub = add_label(scr, "Learn English in Context", 46, 22)
@@ -906,11 +906,13 @@ def _render_dashboard():
 
 def main():
     gc.collect()
-    init_display()
 
-    # Wi-Fi 连接（C11 真实 API 模式下必须开启，mock 模式可跳过）。
+    # Wi-Fi 必须先于 LVGL 初始化连接：LVGL 启动后会占用大量 PSRAM/heap，
+    # 之后再 init wifi 驱动会因为 NVS cfg alloc 失败抛 "WiFi Out of Memory"。
     if AUTO_CONNECT_WIFI:
         connect_wifi()
+
+    init_display()
 
     # C11：真实 API 模式下启动时探测后端连通性，结果打印到串口方便排查。
     # mock 模式下跳过探测，保证离线也能正常启动。
@@ -920,7 +922,7 @@ def main():
     show_home()
 
     # 启动诊断信息，方便联调时通过串口快速确认环境。
-    print("--> SceneLingo CYD dashboard ready.")
+    print("--> Scene Words CYD dashboard ready.")
     print("--> MicroPython:", os.uname().release)
     print("--> LVGL: %s.%s" % (lv.version_major(), lv.version_minor()))
     print("--> API_BASE:", API_BASE)
