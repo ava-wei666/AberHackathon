@@ -538,6 +538,9 @@ def init_display():
     display.set_backlight(100)
 
     indev = xpt2046.XPT2046(device=indev_device)
+    # 首次烧机时 NVS 没有校准数据，触摸 raw 值能读到但映射不出屏幕坐标，
+    # 按钮看着画了却点不响应。is_calibrated 在 NVS 数据存在时返回 True，
+    # 没数据时返回 False -> 自动出十字让用户校准 -> 保存进 NVS -> 后续启动跳过。
     if not indev.is_calibrated and _ALLOW_TOUCH_CAL:
         indev.calibrate()
         indev._cal.save()
