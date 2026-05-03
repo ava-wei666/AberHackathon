@@ -4,7 +4,7 @@
 
 ## 三条线重新分配
 
-```text
+```
 线 A：Backend + NLP + SQLite
 线 B：Web Input + Web Dashboard
 线 C：CYD LVGL Display + Hardware Integration
@@ -16,7 +16,7 @@
 
 线 B 技术栈固定如下：
 
-```text
+```
 Web 页面：原生 HTML + CSS + JavaScript
 网络请求：浏览器 fetch API
 部署方式：直接打开 HTML，或用 Python 内置 http.server 做静态服务
@@ -47,14 +47,14 @@ MVP 阶段不要引入这些东西，避免技术栈混乱：
 
 线 B 主要负责：
 
-```text
+```
 web/
   index.html
 ```
 
 线 B 不负责：
 
-```text
+```
 backend/                       # 线 A
 lvgl9_firmwares/               # 线 C
 docs/LINE_C_CONTENT_DEMO_QA_TASKS.md
@@ -66,7 +66,7 @@ docs/LINE_C_CONTENT_DEMO_QA_TASKS.md
 
 线 B 要完成这个 Web 闭环：
 
-```text
+```
 Typed Text / Transcript
   -> POST /analyze_text
   -> 展示 detected context / keywords / phrases / summary
@@ -81,13 +81,13 @@ Typed Text / Transcript
 
 开发默认地址：
 
-```text
+```
 http://localhost:8000
 ```
 
 手机访问 laptop 后端时，必须改成 laptop 的局域网 IP：
 
-```text
+```
 http://192.168.x.x:8000
 ```
 
@@ -109,7 +109,7 @@ const API_BASE = "http://localhost:8000";
 
 电脑浏览器：
 
-```text
+```
 C:\hackathon\web\index.html
 ```
 
@@ -122,7 +122,7 @@ python -m http.server 5500 --directory web
 
 手机访问：
 
-```text
+```
 http://你的电脑IP:5500
 ```
 
@@ -139,13 +139,13 @@ http://你的电脑IP:5500
 
 文件：
 
-```text
+```
 web/index.html
 ```
 
 页面必须保留这些区域：
 
-```text
+```
 1. Source / Context 选择区
 2. Text 输入区
 3. Analysis Result 结果区
@@ -175,13 +175,13 @@ web/index.html
 
 接口：
 
-```text
+```
 GET /contexts
 ```
 
 Web 逻辑：
 
-```text
+```
 页面加载
   -> fetch GET /contexts
   -> 保存 real_world 和 story 两组数据
@@ -201,7 +201,7 @@ Web 逻辑：
 
 接口：
 
-```text
+```
 POST /analyze_text
 ```
 
@@ -217,7 +217,7 @@ POST /analyze_text
 
 Web 逻辑：
 
-```text
+```
 点击 Analyze Text
   -> result 区显示 Analyzing...
   -> fetch POST /analyze_text
@@ -241,7 +241,7 @@ Web 逻辑：
 
 页面至少显示：
 
-```text
+```
 Detected Context
 Top Keywords
 Useful Phrases
@@ -268,7 +268,7 @@ Suggested Review Items
 
 接口：
 
-```text
+```
 POST /save_item
 ```
 
@@ -284,7 +284,7 @@ POST /save_item
 
 Web 逻辑：
 
-```text
+```
 分析成功
   -> keywords 生成 Save Word 按钮
   -> phrases 生成 Save Phrase 按钮
@@ -305,7 +305,7 @@ Web 逻辑：
 
 接口：
 
-```text
+```
 GET /dashboard
 ```
 
@@ -335,25 +335,25 @@ GET /dashboard
 
 Coffee Shop：
 
-```text
+```
 Hi, can I get a latte with milk to go? How much is the large size?
 ```
 
 Doctor / Pharmacy：
 
-```text
+```
 I have a headache and a cough. Do I need medicine from the pharmacy?
 ```
 
 King's Cross：
 
-```text
+```
 Which platform should I use to catch the train to the magic school at King's Cross?
 ```
 
 Baker Street：
 
-```text
+```
 The detective found a clue on Baker Street and tried to solve the case.
 ```
 
@@ -386,7 +386,7 @@ The detective found a clue on Baker Street and tried to solve the case.
 
 Web fallback 流程：
 
-```text
+```
 1. 输入 Coffee Shop transcript
 2. 点击 Analyze Text
 3. 展示 detected context、keywords、phrases、summary
@@ -420,7 +420,7 @@ Web fallback 流程：
 - 保存 item 后 dashboard 的变化
 - 哪些字段适合 CYD 显示：
 
-```text
+```
 detected_context.title
 keywords
 phrases
@@ -463,13 +463,13 @@ review_today
 
 原因通常是 `API_BASE` 仍然写着：
 
-```text
+```
 http://localhost:8000
 ```
 
 手机里的 localhost 指手机自己，不是 laptop。应改成：
 
-```text
+```
 http://laptop局域网IP:8000
 ```
 

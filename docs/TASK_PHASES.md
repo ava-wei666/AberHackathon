@@ -395,7 +395,7 @@ context ids：coffee_shop、doctor_pharmacy、kings_cross、baker_street
 
 线 B 技术栈固定：
 
-```text
+```
 原生 HTML + CSS + JavaScript + fetch API
 ```
 
@@ -521,7 +521,7 @@ const API_BASE = "http://localhost:8000";
 - Analysis Result 不只依赖一坨 JSON
 - 至少把这些字段清楚显示出来：
 
-```text
+```
 Detected Context
 Top Keywords
 Top Phrases
@@ -587,7 +587,7 @@ Suggested Review Items
 - 在页面里保留一个默认 Coffee Shop 文本
 - 开发时用下面 4 段文本测试 Web 调用，不新建文档
 
-```text
+```
 Coffee Shop:
 Hi, can I get a latte with milk to go? How much is the large size?
 
@@ -635,7 +635,7 @@ The detective found a clue on Baker Street and tried to solve the case.
 
 - 如果 CYD 临时网络失败，Web 可以 60 秒内演示：
 
-```text
+```
 输入 Coffee Shop 文本 -> Analyze -> Save Word -> Refresh Dashboard
 ```
 
@@ -678,7 +678,7 @@ The detective found a clue on Baker Street and tried to solve the case.
 
 线 C 技术栈固定：
 
-```text
+```
 MicroPython + LVGL + HTTP requests / urequests + JSON
 ```
 
@@ -920,7 +920,7 @@ def save_item(item_text, item_type, source_context):
 
 联调顺序：
 
-```text
+```
 1. CYD 请求 /dashboard
 2. Web 保存一个 word
 3. CYD Refresh Dashboard
@@ -947,7 +947,7 @@ def save_item(item_text, item_type, source_context):
 
 推荐文案：
 
-```text
+```
 Home
 Real-world
 Story

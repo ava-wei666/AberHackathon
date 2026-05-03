@@ -1,5 +1,7 @@
 import json
 import sqlite3
+from collections.abc import Iterator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Any
 
@@ -9,11 +11,19 @@ DB_PATH = ROOT_DIR / "scenelingo.db"
 SEED_PATH = Path(__file__).with_name("seed_data.json")
 
 
-def get_connection() -> sqlite3.Connection:
-    # 每次按需打开 SQLite 连接；row_factory 让查询结果可以用字段名读取。
+@contextmanager
+def get_connection() -> Iterator[sqlite3.Connection]:
+    # 每次按需打开 SQLite 连接；显式提交和关闭，避免 Windows 联调时残留数据库文件占用。
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
-    return connection
+    try:
+        yield connection
+        connection.commit()
+    except Exception:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
 
 
 def init_db() -> None:

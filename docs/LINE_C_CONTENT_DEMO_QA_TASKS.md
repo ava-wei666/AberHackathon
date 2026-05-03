@@ -4,7 +4,7 @@
 
 ## 三条线重新分配
 
-```text
+```
 线 A：Backend + NLP + SQLite
 线 B：Web Input + Web Dashboard
 线 C：CYD LVGL Display + Hardware Integration
@@ -16,7 +16,7 @@
 
 线 C 技术栈固定如下：
 
-```text
+```
 设备：CYD / ESP32 Cheap Yellow Display
 语言：MicroPython
 UI：LVGL
@@ -46,7 +46,7 @@ MVP 阶段不要引入这些东西，避免现场调试爆炸：
 
 线 C 主要负责：
 
-```text
+```
 lvgl9_firmwares/
   touch_color_test.py          # 已有测试文件，尽量不破坏
   scenelingo_dashboard.py      # 建议新增，作为 CYD 业务主文件
@@ -54,7 +54,7 @@ lvgl9_firmwares/
 
 线 C 不负责：
 
-```text
+```
 backend/                       # 线 A
 web/index.html                 # 线 B
 docs/                          # 不再继续拆文档
@@ -64,7 +64,7 @@ docs/                          # 不再继续拆文档
 
 CYD 端要完成这个闭环：
 
-```text
+```
 CYD Home
   -> Context Select
   -> Insight View
@@ -85,7 +85,7 @@ CYD Home
 
 CYD 访问 laptop 后端时，必须使用 laptop 的局域网 IP：
 
-```text
+```
 http://192.168.x.x:8000
 ```
 
@@ -148,13 +148,13 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 建议新增：
 
-```text
+```
 lvgl9_firmwares/scenelingo_dashboard.py
 ```
 
 文件结构建议：
 
-```text
+```
 API config
 Wi-Fi config / connect_wifi()
 mock data
@@ -246,7 +246,7 @@ def save_item(item_text, item_type, source_context):
 
 需要的页面：
 
-```text
+```
 Home
 Context Select
 Insight View
@@ -273,7 +273,7 @@ Dashboard View
 
 屏幕内容：
 
-```text
+```
 SceneLingo
 
 [Real-world]
@@ -299,21 +299,21 @@ SceneLingo
 
 Real-world：
 
-```text
+```
 Coffee Shop
 Doctor / Pharmacy
 ```
 
 Story：
 
-```text
+```
 King's Cross
 Baker Street
 ```
 
 点击行为：
 
-```text
+```
 点击 context
   -> 优先 GET /context/{id}
   -> 成功则进入 Insight View
@@ -332,7 +332,7 @@ Baker Street
 
 必须显示：
 
-```text
+```
 Context title
 Top Keywords
 Useful Phrases
@@ -359,13 +359,13 @@ Back
 
 接口：
 
-```text
+```
 GET /dashboard
 ```
 
 必须显示：
 
-```text
+```
 Saved Words
 Saved Phrases
 Top Context
@@ -387,7 +387,7 @@ Back
 
 接口：
 
-```text
+```
 POST /save_item
 ```
 
@@ -428,7 +428,7 @@ POST /save_item
 
 联调顺序：
 
-```text
+```
 1. CYD 请求 GET /dashboard
 2. Web 保存一个 word
 3. CYD Refresh Dashboard
@@ -459,7 +459,7 @@ POST /save_item
 
 推荐文案：
 
-```text
+```
 Home
 Real-world
 Story

@@ -4,7 +4,7 @@
 
 ## 三条线重新分配
 
-```text
+```
 线 A：Backend + NLP + SQLite
 线 B：Web Input + Web Dashboard
 线 C：CYD LVGL Display + Hardware Integration
@@ -700,7 +700,7 @@ GET /dashboard
 
 线 B 需要验证的 Web 闭环：
 
-```text
+```
 输入文本 -> POST /analyze_text -> 显示结果 -> POST /save_item -> GET /dashboard
 ```
 
@@ -712,7 +712,7 @@ GET /dashboard
 
 线 A 必须给线 C 这几项：
 
-```text
+```
 局域网 API：
 http://你的局域网IP:8000
 
@@ -735,7 +735,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
 线 C 需要验证的 CYD 闭环：
 
-```text
+```
 CYD 请求 /dashboard -> 显示 saved words / saved phrases
 CYD 点击保存 -> POST /save_item -> Web dashboard 能看到更新
 ```
@@ -751,7 +751,7 @@ CYD 点击保存 -> POST /save_item -> Web dashboard 能看到更新
 
 线 A 不单独负责写 demo 文档，但必须用下面 4 段文本自测后端效果：
 
-```text
+```
 Coffee Shop:
 Hi, can I get a latte with milk to go? How much is the large size?
 
