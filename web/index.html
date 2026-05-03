@@ -587,67 +587,16 @@
         setStatus(analysisStatus, "Analyzing...");
 
         try {
-<<<<<<< HEAD
-          // 加 try/catch 是为了把 fetch / 解析异常显式打到 UI；
-          // 否则后端没启动或 CORS 失败时网页会一直卡在 "Analyzing..."。
-=======
->>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
           const response = await fetch(`${API_BASE}/analyze_text`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-<<<<<<< HEAD
-              raw_text: rawText.value,
-=======
               raw_text: text,
->>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
               source_type: sourceType.value,
               optional_context: contextSelect.value || null,
             }),
           });
 
-<<<<<<< HEAD
-          if (!response.ok) {
-            // 4xx / 5xx 也要让用户看到，比如 422（输入校验失败）。
-            const errorText = await response.text();
-            resultOutput.textContent =
-              `HTTP ${response.status} ${response.statusText}\n${errorText}`;
-            return;
-          }
-
-          latestResult = await response.json();
-          resultOutput.textContent = JSON.stringify(latestResult, null, 2);
-          renderSaveButtons();
-        } catch (error) {
-          // 网络层错误（后端没启动、CORS、断网）走这里。
-          resultOutput.textContent =
-            `Analyze failed: ${error.message}\n` +
-            `Check that the backend is running at ${API_BASE}.`;
-        }
-      }
-
-      function renderSaveButtons() {
-        // 把关键词和短语渲染成可点击保存的 chip 按钮。
-        if (!latestResult) return;
-
-        const contextId = latestResult.detected_context.id;
-        const items = [
-          ...latestResult.keywords.map((item) => ({ item, type: "word" })),
-          ...latestResult.phrases.map((item) => ({ item, type: "phrase" })),
-        ];
-
-        for (const { item, type } of items) {
-          const button = document.createElement("button");
-          button.className = "chip";
-          button.textContent = `Save ${item}`;
-          button.addEventListener("click", () => saveItem(item, type, contextId));
-          saveButtons.appendChild(button);
-        }
-      }
-
-      async function saveItem(itemText, itemType, sourceContext) {
-        // 保存复习项后刷新 dashboard，能立刻看到保存结果。
-=======
           latestResult = await parseJsonResponse(response);
           rawAnalysisJson.textContent = JSON.stringify(latestResult, null, 2);
           renderAnalysisResult(latestResult);
@@ -753,7 +702,6 @@
         button.disabled = true;
         setStatus(saveStatus, `Saving ${itemType}: ${itemText}...`);
 
->>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
         try {
           const response = await fetch(`${API_BASE}/save_item`, {
             method: "POST",
@@ -764,17 +712,6 @@
               source_context: sourceContext,
             }),
           });
-<<<<<<< HEAD
-          if (!response.ok) {
-            // 422 等错误显式贴出来，避免静默失败。
-            dashboardOutput.textContent =
-              `Save failed: HTTP ${response.status}\n${await response.text()}`;
-            return;
-          }
-          await loadDashboard();
-        } catch (error) {
-          dashboardOutput.textContent = `Save failed: ${error.message}`;
-=======
 
           const result = await parseJsonResponse(response);
           if (result.saved !== true) {
@@ -786,28 +723,10 @@
         } catch (error) {
           button.disabled = false;
           setStatus(saveStatus, `Could not save item: ${error.message}`, "error");
->>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
         }
       }
 
       async function loadDashboard() {
-<<<<<<< HEAD
-        // Dashboard 输出先保留 JSON 形式，方便后续 CYD 照着字段接 UI。
-        try {
-          const response = await fetch(`${API_BASE}/dashboard`);
-          if (!response.ok) {
-            dashboardOutput.textContent =
-              `Dashboard failed: HTTP ${response.status}\n${await response.text()}`;
-            return;
-          }
-          const dashboard = await response.json();
-          dashboardOutput.textContent = JSON.stringify(dashboard, null, 2);
-        } catch (error) {
-          dashboardOutput.textContent =
-            `Dashboard failed: ${error.message}\n` +
-            `Check that the backend is running at ${API_BASE}.`;
-        }
-=======
         dashboardButton.disabled = true;
         setStatus(dashboardStatus, "Loading dashboard...");
 
@@ -893,7 +812,6 @@
         renderContextOptions();
         contextSelect.value = "";
         setStatus(analysisStatus, `Loaded ${key} demo text.`);
->>>>>>> d9ea00b82221f35aa0f6915c059436e874ffd59c
       }
 
       sourceType.addEventListener("change", renderContextOptions);
