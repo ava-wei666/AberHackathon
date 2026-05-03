@@ -174,9 +174,11 @@ def _public_context(context: dict[str, Any], confidence: float) -> dict[str, Any
 
 
 def _title_phrase(phrase: str) -> str:
-    # 展示用的小工具：把短语首字母做轻量格式化。
+    # 展示用的小工具：常规句式轻量标题化；to go / for here 这类功能短语保留自然小写。
     small_words = {"a", "an", "and", "for", "in", "of", "the", "to", "with"}
     words = phrase.split()
+    if words and words[0] in small_words:
+        return " ".join(words)
     return " ".join(word if word in small_words else word.capitalize() for word in words)
 
 

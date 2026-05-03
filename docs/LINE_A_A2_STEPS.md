@@ -10,7 +10,7 @@
 | 执行日期 | `2026-05-03` |
 | 工作目录 | `C:\hackathon` |
 | 后端地址 | `http://127.0.0.1:8000/` |
-| 当前服务进程 | A3 后已重启为 `19644` |
+| 当前服务进程 | A5 后已重启为 `42864` |
 | 主要涉及文件 | `backend/seed_data.json`、`backend/database.py`、`backend/main.py` |
 | 本次业务代码改动 | 无 |
 | 文档记录 | `docs/LINE_A_A2_STEPS.md` |

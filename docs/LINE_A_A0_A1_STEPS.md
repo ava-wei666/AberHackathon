@@ -11,7 +11,7 @@
 | 工作目录 | `C:\hackathon` |
 | 虚拟环境 | `C:\hackathon\.venv` |
 | 后端地址 | `http://127.0.0.1:8000/` |
-| 当前服务进程 | A3 后已重启为 `19644` |
+| 当前服务进程 | A5 后已重启为 `42864` |
 | 主要涉及文件 | `backend/main.py`、`backend/__init__.py`、`backend/nlp_engine.py`、`backend/database.py`、`requirements.txt` |
 | 本次业务代码改动 | 无 |
 | 文档记录 | `docs/LINE_A_A0_A1_STEPS.md` |
@@ -118,12 +118,13 @@ A1 接口检查：
 | 时间点 | 进程号 | 说明 |
 | --- | --- | --- |
 | A1 执行后 | `38300` | A1 阶段启动的后台服务 |
-| A3 执行后 | `19644` | A3 修改数据库连接后已重启，当前使用此进程 |
+| A3 执行后 | `19644` | A3 修改数据库连接后重启的服务 |
+| A5 执行后 | `42864` | A5 修改 NLP phrase 展示格式后重启，当前使用此进程 |
 
 停止当前服务：
 
 ```powershell
-Stop-Process -Id 19644
+Stop-Process -Id 42864
 ```
 
 ## 结论
