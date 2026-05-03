@@ -554,27 +554,54 @@ def _render_home():
     lv.screen_load(scr)
 
 
+# ==================== C7 Context Select Screen ====================
+# C7 要求：显示 4 个 context 入口（real-world / story 各 2 个）。
+# 点击任意 context 优先请求真实 API，失败时用 mock context 进入 Insight View。
+# Back 按钮必须能回到 Home。
+
+# source_type 到显示标题的映射，避免直接显示内部 key。
+_SOURCE_TYPE_LABELS = {
+    "real-world": "Real-world",
+    "story": "Story",
+}
+
+
 def _render_context_select(source_type):
     global current_source_type
     current_source_type = source_type or "real-world"
 
     scr = lv.obj()
     set_common_screen(scr)
-    add_title(scr, "Context")
 
+    # 标题显示当前场景类型（Real-world / Story），让用户明确知道在哪一层。
+    type_label = _SOURCE_TYPE_LABELS.get(current_source_type, "Context")
+    add_title(scr, type_label)
+
+    # 副标题提示用户操作，字号小、颜色淡，不抢主按钮的视觉重心。
+    sub = add_label(scr, "Select a context", 46, 22)
+    sub.set_style_text_color(lv.color_hex(0x8899AA), 0)
+
+    # 按 context 列表渲染按钮，最多显示 4 个，超出部分不显示（小屏幕限制）。
+    # 按钮宽度 210px，高度 48px，间距 64px，手指易点中。
     contexts = fetch_contexts().get(current_source_type, [])
-    y = 58
+    y = 84
     for context in contexts[:4]:
         context_id = context.get("id", "coffee_shop")
         title = context.get("title", context_id)
-        add_button(scr, title, y, lambda context_id=context_id: open_context(context_id), 205, 40)
-        y += 50
+        # 用默认参数捕获 context_id，避免 lambda 闭包陷阱。
+        add_button(scr, title, y,
+                   lambda context_id=context_id: open_context(context_id),
+                   210, 48)
+        y += 64
 
-    add_button(scr, "Back", 260, go_back, 90, 38)
+    # Back 按钮固定在屏幕底部，返回 Home（C5 的 go_back() 历史栈弹出）。
+    add_button(scr, "Back", 270, go_back, 100, 38)
     lv.screen_load(scr)
 
 
 def open_context(context_id):
+    # 优先请求真实 API（fetch_context 内部处理失败 + mock fallback）。
+    # 无论成功还是失败都能拿到 data，不会传 None 给 Insight View 导致黑屏。
     data = fetch_context(context_id)
     go_to("insight", data)
 
