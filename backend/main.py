@@ -3,7 +3,7 @@ from typing import Literal
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from .database import (
     get_context_by_id,
@@ -22,12 +22,48 @@ class AnalyzeTextRequest(BaseModel):
     source_type: Literal["real-world", "story"] = "real-world"
     optional_context: str | None = None
 
+    @field_validator("raw_text")
+    @classmethod
+    def normalize_raw_text(cls, value: str) -> str:
+        # 去掉用户输入前后的空白，避免纯空格文本进入 NLP 分析流程。
+        stripped_value = value.strip()
+        if not stripped_value:
+            raise ValueError("raw_text cannot be empty")
+        return stripped_value
+
+    @field_validator("optional_context")
+    @classmethod
+    def normalize_optional_context(cls, value: str | None) -> str | None:
+        # 空字符串和纯空格都按未指定 context 处理，方便 Web / CYD 直接传表单值。
+        if value is None:
+            return None
+        stripped_value = value.strip()
+        return stripped_value or None
+
 
 # 请求模型：保存一个单词或短语到复习列表。
 class SaveItemRequest(BaseModel):
     item_text: str = Field(..., min_length=1)
     item_type: Literal["word", "phrase"]
     source_context: str | None = None
+
+    @field_validator("item_text")
+    @classmethod
+    def normalize_item_text(cls, value: str) -> str:
+        # 保存复习项前统一裁剪空白，确保 review_items 里不会出现空内容。
+        stripped_value = value.strip()
+        if not stripped_value:
+            raise ValueError("item_text cannot be empty")
+        return stripped_value
+
+    @field_validator("source_context")
+    @classmethod
+    def normalize_source_context(cls, value: str | None) -> str | None:
+        # source_context 允许为空；传空字符串时写入 NULL，保持 Dashboard 数据干净。
+        if value is None:
+            return None
+        stripped_value = value.strip()
+        return stripped_value or None
 
 
 @asynccontextmanager
