@@ -21,11 +21,13 @@ API_BASE = "http://192.168.137.1:8000"
 WIFI_SSID = "CHANGE_ME"
 WIFI_PASSWORD = "CHANGE_ME"
 
-# C2 阶段默认不自动连 Wi-Fi，保证没有网络时 UI 也能独立启动。
+# CYD 内部 SRAM 不够同时驻留 Wi-Fi 驱动 + LVGL 帧缓冲（详见
+# docs/INTEGRATION_RECORD.md 的"CYD Wi-Fi/LVGL 内存冲突"小节），所以默认
+# 关闭自动联网；CYD 走 mock 演示 UI，真实 NLP/存储闭环由 Web 端承载。
 AUTO_CONNECT_WIFI = False
 
-# C3 要求 mock 数据先行。默认使用 mock，保证后端或网络没准备好时 UI 也能开发和演示。
-# 后续 C11 真实 API 联调时，把这里改成 False 即可复用同一套 UI 结构。
+# 与 AUTO_CONNECT_WIFI 配套：mock 模式下 init_display 能稳定拿到 DMA 帧缓冲，
+# Home / Insight / Dashboard 三个页面用 MOCK_ANALYSIS / MOCK_DASHBOARD 渲染。
 USE_MOCK_DATA = True
 
 # ==================== C11 联调切换指南 ====================
@@ -169,6 +171,13 @@ def connect_wifi(timeout_s=20):
     # C2 只提供 Wi-Fi 连接函数，不强制自动联网；网络失败时返回 None，UI 继续使用 mock。
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
+
+    # CYD 内存紧张：Wi-Fi 默认 rxbuf 会吃掉很多连续堆，导致后面 LVGL 帧缓冲申请失败。
+    # 调到 4KB 够 HTTP polling 用，给 LVGL 留够内存。失败/不支持就忽略。
+    try:
+        wlan.config(rxbuf=4096)
+    except Exception:
+        pass
 
     if wlan.isconnected():
         print_network_info(wlan)
@@ -907,14 +916,16 @@ def _render_dashboard():
 def main():
     gc.collect()
 
-    # Wi-Fi 必须先于 LVGL 初始化连接：LVGL 启动后会占用大量 PSRAM/heap，
-    # 之后再 init wifi 驱动会因为 NVS cfg alloc 失败抛 "WiFi Out of Memory"。
+    # Wi-Fi 必须先于 LVGL 初始化连接：LVGL 启动后会占用大量 DMA 区，
+    # 之后再 init wifi 驱动会抛 "WiFi Out of Memory"。当前 CYD 内存
+    # 实际不够同时跑 Wi-Fi + LVGL，所以默认 AUTO_CONNECT_WIFI=False；
+    # 这里保留正确顺序，以便未来固件优化后能直接打开。
     if AUTO_CONNECT_WIFI:
         connect_wifi()
 
     init_display()
 
-    # C11：真实 API 模式下启动时探测后端连通性，结果打印到串口方便排查。
+    # 真实 API 模式下启动时探测后端连通性，结果打印到串口方便排查。
     # mock 模式下跳过探测，保证离线也能正常启动。
     if not USE_MOCK_DATA:
         probe_api()

@@ -130,37 +130,89 @@ mpremote connect COM3 reset
 
 CYD 屏幕 Home 页标题更新为 `Scene Words`。
 
-## 后续步骤（待执行）
+## CYD 切换真实 API 的尝试与最终决定
 
-mock 模式只是 UI 验证，闭环还需要切到真实 API。以下步骤将在用户提供 Wi-Fi 密码后继续：
+mock UI 跑通后尝试把 CYD 切到真实 API 模式，遇到一连串 Wi-Fi 与内存问题，最终决定**让 CYD 留在 mock 模式演 UI、Web 端承担真实 NLP/存储闭环**。本节记录全部排错过程，避免后人重走老路。
 
-1. **打开 Mobile Hotspot**：让 CYD 通过 SSID `SceneLingo-CYD` 接入 laptop 局域网（laptop 自己仍走 eduroam）
-2. **启动后端**（必须 `--host 0.0.0.0`，否则 CYD 连不到）：
-   ```powershell
-   uvicorn backend.main:app --host 0.0.0.0 --port 8000
-   ```
+### 1. Wi-Fi 路径切换
 
-1. **修改 `lvgl9_firmwares/scenelingo_dashboard.py` 顶部 4 项**（密码不写入 Git）：
-   ```python
-   API_BASE          = "http://192.168.137.1:8000"   # 已正确，不动
-   WIFI_SSID         = "SceneLingo-CYD"
-   WIFI_PASSWORD     = "<本地填，禁止 commit>"
-   AUTO_CONNECT_WIFI = True
-   USE_MOCK_DATA     = False
-   ```
+| 阶段                                                                 | 结果                                                                                                                   |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| 一开始按 `TASK_C1_RECORD.md` 走 Windows Mobile Hotspot `SceneLingo-CYD` | C1 写的 SSID 已不再有效；Windows 11 现在默认 WPA2/WPA3 mixed (`authmode=7`)，ESP32 SAE 握手不稳，status 在 `201/1001/202` 之间反复，最终拿不到 IP |
+| 改 Windows hotspot 为纯 ASCII SSID 与密码 (`scenewords-ap`)              | 同上失败，问题是混合模式不是密码字符                                                                                                   |
+| 切到手机热点 `siwen`（纯 WPA2-PSK，2.4 GHz channel 6）                       | Wi-Fi 终于稳定握手，CYD 拿到 IP `192.168.245.107`，REPL 里 `urequests.get('/dashboard')` 返回 200                                 |
 
-1. **重新上传并复位**：
-   ```powershell
-   mpremote connect COM3 fs cp lvgl9_firmwares/scenelingo_dashboard.py :main.py
-   mpremote connect COM3 reset
-   ```
+附带踩到的 Windows 行为：Mobile Hotspot 默认"无设备连接一段时间自动关"，过 1–2 分钟就 Off；CYD 第一次连尝试期间热点已经关了。我们临时跑了一个 PowerShell `keepalive.ps1` 每 2 秒检查、Off 就重启，作为 hotspot 排错期间的兜底。
 
-1. **`git restore` 把密码改回 `CHANGE_ME`**，避免误 commit
-2. **闭环验证**（参见 `TASK_PHASES.md` Step 5）：
-   - CYD 进入 Dashboard → Refresh，看到真实数据
-   - Web 提交一段 Coffee Shop 文本 → Save Word
-   - CYD 再 Refresh → 看到刚保存的词
+### 2. CYD 端启动顺序与内存碰撞
+
+完成 Wi-Fi 后用埋点把 `main()` 走过的步骤写到 flash `boot.log`，发现两组互斥的 OOM：
+
+**组 A：原始顺序 `init_display() -> connect_wifi()`**
+
+```
+ets Jul 29 2019 12:21:46
+rst:0xc (SW_CPU_RESET) ...
+E (1871) wifi:wifi nvs cfg alloc out of memory
+E (1871) wifi:init nvs: failed, ret=101
+OSError: WiFi Out of Memory
+```
+
+LVGL 启动后吃光了大块 SRAM，wifi 驱动 init 时 NVS config 申请失败。
+
+**组 B：交换后 `connect_wifi() -> init_display()`**
+
+```
+B:gc-done       mem=137936
+B2:reserved-fb  mem=121152   (预占 16KB)
+C:pre-wifi      mem=120768
+D:wifi-done     mem=94400    (Wi-Fi 消耗 ~26KB)
+E:pre-init_display mem=112256
+Z:CRASH MemoryError('Unable to allocate memory for frame buffer (15360)')
+```
+
+Wi-Fi 装好后总余量还有 112KB，但 LVGL 想要的 15KB **DMA-capable + 连续** 的 frame buffer 拿不到。
+
+试过的缓解都没救：
+
+- `gc.collect()` 在 `connect_wifi()` 后立刻跑：mem 从 94KB 涨到 112KB，但仍分不出 15KB 连续块
+- 在 wifi 之前 `bytearray(16384)` 预占 16KB，wifi 后 `del + gc.collect()` 释放：依然 fragmented
+- `wlan.config(rxbuf=4096)` 想压小 wifi 接收缓冲：调用没报错，但实际 wifi 仍消耗 ~26KB
+
+**根因**（用 `esp32.idf_heap_info(esp32.HEAP_DATA)` 看堆区域）：
+
+```
+total / free / largest_free
+(84928,  4, 0)            <- 85KB DMA 区已被 Wi-Fi 占满
+(113840, 74008, 59392)    <- 113KB 区有 59KB 连续，但不是 DMA-capable
+...小区域全部 ~4 字节
+```
+
+LVGL 帧缓冲必须从 **DMA-capable internal SRAM** 取，那 85KB 区被 Wi-Fi 完全占用，剩下的 113KB 区给不出 DMA 内存。这台 CYD **没有 PSRAM**，所以也没法把帧缓冲挪到 SPIRAM。
+
+要彻底修需要重编 LVGL MicroPython 固件，调小 `static_rx_buf_num` / 关 AMPDU / 缩小 wifi 静态分配。Hackathon 时间窗内不一定来得及。
+
+### 3. 决定：CYD mock + Web 真实
+
+和需求方确认后选择：
+
+- **CYD**：`AUTO_CONNECT_WIFI = False`、`USE_MOCK_DATA = True`。屏幕显示 Home / Insight / Dashboard 三页 LVGL UI，数据来自脚本里硬编码的 `MOCK_ANALYSIS` / `MOCK_DASHBOARD`。这正是 C2/C3 任务里设计的"mock 数据先行"，本来就是 fallback。
+- **Web**：承担真实 `Web → FastAPI → SQLite → Dashboard` 闭环。`web/index.html` 已修复合并冲突（见下一节），可以现场演示输入 → 分析 → 保存 → dashboard 刷新。
+- **演示话术**：CYD 是受限设备，演 UI 故事；真实 NLP / 存储 / 复习闭环由 Web 端展示。两边架构相同，CYD 后续把 Wi-Fi 内存问题修了就能直接打开开关切真实数据。
+
+### 4. 顺手发现：`web/index.html` 还留着未解决的合并冲突标记
+
+合并 `a5bceb2` 时不只是 Line C 文件被删，`web/index.html` 里还有 5 处 `<<<<<<< HEAD ... ======= ... >>>>>>> d9ea00b` 标记没被解决就提交了。浏览器把这些标记当 JavaScript 解析直接 syntax error，整个 `<script>` 块不执行，Analyze / Save / Refresh 按钮都不响应。
+
+解决：`git checkout d9ea00b -- web/index.html` 取 d9ea00b 那一侧（Line B 的完整 dashboard UI），重新打 Scene Words 改名补丁。提交在 `eb7ff2f`。
+
+## 当前演示流程
+
+1. laptop 跑后端：`uvicorn backend.main:app --host 0.0.0.0 --port 8000`
+2. 浏览器双击打开 `web/index.html`
+3. 输入 Coffee Shop 文本 → Analyze Text → Save Word/Phrase → Refresh Dashboard，全过程 30 秒可演完整闭环
+4. CYD 上电，自动跑 `:main.py` (mock 模式)，屏幕显示 Scene Words Home，三按钮可点进 Insight / Dashboard，展示 LVGL UI 与产品形态
 
 ## 一句话给老师 / 队友
 
-> 三条线（后端、网页、CYD 业务文件）都已经合到 `main`。合并时一次解决冲突错误把 CYD 主程序删掉了，从线 C 那一支的最后一个 commit (`7b8b5a2`) 把丢失的 14 个文件捡回来，新加 commit `34aadc6` 完成恢复。然后把 CYD 业务文件以 mock 模式烧到 ESP32 验证 UI（屏幕亮、按钮可点），再把产品名从 `SceneLingo` 改成 `Scene Words`。下一步打开热点 + 启动后端，把 CYD 切到真实 API，完成 Web → 后端 → SQLite → CYD 的闭环。
+> 三条线（后端、网页、CYD）已合到 `main`。合并时一次错误冲突解决把 CYD 主程序和 14 个 task 记录删了，从线 C 顶端 `7b8b5a2` checkout 回来 (`34aadc6`)；同次合并还把 `web/index.html` 的合并冲突标记原样提交，导致 Web 按钮失灵，取 `d9ea00b` 完整版重做 (`eb7ff2f`)。CYD 烧上后做了 Scene Words 改名 + Wi-Fi/LVGL 顺序修复 (`95aefdb`)，但深入排查发现 ESP32 内部 SRAM 不够同时跑 Wi-Fi 驱动和 LVGL DMA 帧缓冲，hackathon 时间内无法重编固件，所以决定 CYD 走 mock 模式演 UI，Web 端展示真实闭环。整体演示是端到端跑通的，只是 CYD ↔ 后端的实时联动留作后续优化。
