@@ -2,19 +2,19 @@
 
 ## 记录字段
 
-| 字段 | 内容 |
-| --- | --- |
-| Line | `LINE_A` |
-| Task | `A9 - Context API` |
-| 状态 | 已通过 |
-| 执行日期 | `2026-05-03` |
-| 工作目录 | `C:\hackathon` |
-| 后端地址 | `http://127.0.0.1:8000/` |
-| 当前服务进程 | `48024` |
-| 主要涉及文件 | `backend/main.py`、`backend/database.py`、`backend/seed_data.json`、`scenelingo.db` |
-| 本次业务代码改动 | 无 |
-| 文档记录 | `docs/LINE_A_A9_STEPS.md` |
-| 下一步 | A10 Save / Dashboard API |
+| 字段       | 内容                                                                               |
+| -------- | -------------------------------------------------------------------------------- |
+| Line     | `LINE_A`                                                                         |
+| Task     | `A9 - Context API`                                                               |
+| 状态       | 已通过                                                                              |
+| 执行日期     | `2026-05-03`                                                                     |
+| 工作目录     | `C:\hackathon`                                                                   |
+| 后端地址     | `http://127.0.0.1:8000/`                                                         |
+| 当前服务进程   | `48024`                                                                          |
+| 主要涉及文件   | `backend/main.py`、`backend/database.py`、`backend/seed_data.json`、`scenelingo.db` |
+| 本次业务代码改动 | 无                                                                                |
+| 文档记录     | `docs/LINE_A_A9_STEPS.md`                                                        |
+| 下一步      | A10 Save / Dashboard API                                                         |
 
 ## 编号说明
 
@@ -34,37 +34,37 @@
 
 `GET /contexts`
 
-| 字段 | 内容 |
-| --- | --- |
-| Method | `GET` |
-| Path | `/contexts` |
-| 用途 | 返回 real-world / story 两组 context |
-| 数据来源 | SQLite `contexts` 表 |
-| 写数据库 | 否 |
+| 字段     | 内容                               |
+| ------ | -------------------------------- |
+| Method | `GET`                            |
+| Path   | `/contexts`                      |
+| 用途     | 返回 real-world / story 两组 context |
+| 数据来源   | SQLite `contexts` 表              |
+| 写数据库   | 否                                |
 
 `GET /context/{id}`
 
-| 字段 | 内容 |
-| --- | --- |
-| Method | `GET` |
-| Path | `/context/{context_id}` |
-| 用途 | 返回单个 context 卡片数据 |
-| 数据来源 | SQLite `contexts` 表 |
+| 字段     | 内容                                        |
+| ------ | ----------------------------------------- |
+| Method | `GET`                                     |
+| Path   | `/context/{context_id}`                   |
+| 用途     | 返回单个 context 卡片数据                         |
+| 数据来源   | SQLite `contexts` 表                       |
 | 不存在 id | HTTP 404，`{"detail":"Context not found"}` |
-| 写数据库 | 否 |
+| 写数据库   | 否                                         |
 
 ## 返回字段记录
 
 `GET /contexts` 顶层结构：
 
-| 字段 | 内容 |
-| --- | --- |
+| 字段           | 内容                    |
+| ------------ | --------------------- |
 | `real_world` | real-world context 数组 |
-| `story` | story context 数组 |
+| `story`      | story context 数组      |
 
 每个 context 至少包含：
 
-```text
+```
 id
 title
 type
@@ -75,7 +75,7 @@ seed_phrases
 
 当前实现还包含：
 
-```text
+```
 tag
 ```
 
@@ -145,27 +145,27 @@ except HTTPError as error:
 
 ## 验收结果
 
-| 检查项 | 结果 |
-| --- | --- |
-| Python 编译检查 | 通过 |
-| `/contexts` HTTP 状态 | `200` |
-| `/contexts` real-world 数量 | `2` |
-| `/contexts` story 数量 | `2` |
-| `/contexts` context 总数 | `4` |
-| real-world ids | `coffee_shop`、`doctor_pharmacy` |
-| story ids | `kings_cross`、`baker_street` |
-| `/contexts` 必要字段 | 无缺失 |
-| `/context/coffee_shop` HTTP 状态 | `200` |
-| `/context/coffee_shop` id | `coffee_shop` |
-| `/context/coffee_shop` title | `Coffee Shop` |
-| `/context/coffee_shop` keyword 数量 | `12` |
-| `/context/coffee_shop` phrase 数量 | `5` |
-| 不存在 id | HTTP `404` |
-| 404 响应体 | `{"detail":"Context not found"}` |
+| 检查项                               | 结果                               |
+| --------------------------------- | -------------------------------- |
+| Python 编译检查                       | 通过                               |
+| `/contexts` HTTP 状态               | `200`                            |
+| `/contexts` real-world 数量         | `2`                              |
+| `/contexts` story 数量              | `2`                              |
+| `/contexts` context 总数            | `4`                              |
+| real-world ids                    | `coffee_shop`、`doctor_pharmacy`  |
+| story ids                         | `kings_cross`、`baker_street`     |
+| `/contexts` 必要字段                  | 无缺失                              |
+| `/context/coffee_shop` HTTP 状态    | `200`                            |
+| `/context/coffee_shop` id         | `coffee_shop`                    |
+| `/context/coffee_shop` title      | `Coffee Shop`                    |
+| `/context/coffee_shop` keyword 数量 | `12`                             |
+| `/context/coffee_shop` phrase 数量  | `5`                              |
+| 不存在 id                            | HTTP `404`                       |
+| 404 响应体                           | `{"detail":"Context not found"}` |
 
 `GET /contexts` 检查输出：
 
-```text
+```
 real_world_count=2
 story_count=2
 total_count=4
@@ -176,7 +176,7 @@ missing_fields=
 
 `GET /context/coffee_shop` 检查输出：
 
-```text
+```
 status=HTTP_200
 id=coffee_shop
 title=Coffee Shop
@@ -188,33 +188,33 @@ missing_fields=
 
 404 检查输出：
 
-```text
+```
 status=404
 body={"detail":"Context not found"}
 ```
 
 ## 代码和数据影响
 
-| 字段 | 内容 |
-| --- | --- |
-| 业务代码 | 未修改，现有实现已满足 A9 |
-| 中文注释 | `backend/main.py` 的 context 路由已有中文注释 |
-| 数据库写入 | 无，Context API 只读 |
-| contexts 总数 | `4` |
-| analysis_results 总数 | `12` |
-| review_items 总数 | `4` |
+| 字段                  | 内容                                   |
+| ------------------- | ------------------------------------ |
+| 业务代码                | 未修改，现有实现已满足 A9                       |
+| 中文注释                | `backend/main.py` 的 context 路由已有中文注释 |
+| 数据库写入               | 无，Context API 只读                     |
+| contexts 总数         | `4`                                  |
+| analysis_results 总数 | `12`                                 |
+| review_items 总数     | `4`                                  |
 
 ## 给线 B / 线 C 的联调信息
 
-| 使用方 | 接口 | 用途 |
-| --- | --- | --- |
-| 线 B Web | `GET /contexts` | 渲染 context 选择控件 |
-| 线 C CYD | `GET /context/coffee_shop` | 渲染 Coffee Shop 场景卡片 |
-| 线 C CYD | `GET /context/{id}` | 渲染任意 MVP context 的 Insight View |
+| 使用方     | 接口                         | 用途                              |
+| ------- | -------------------------- | ------------------------------- |
+| 线 B Web | `GET /contexts`            | 渲染 context 选择控件                 |
+| 线 C CYD | `GET /context/coffee_shop` | 渲染 Coffee Shop 场景卡片             |
+| 线 C CYD | `GET /context/{id}`        | 渲染任意 MVP context 的 Insight View |
 
 可用 context ids：
 
-```text
+```
 coffee_shop
 doctor_pharmacy
 kings_cross
@@ -223,19 +223,19 @@ baker_street
 
 ## 当前 Dashboard 记录
 
-| 字段 | 当前结果 |
-| --- | --- |
-| saved words | `receipt`、`latte` |
-| saved phrases | `for here`、`to go` |
-| top context | `coffee_shop` |
+| 字段              | 当前结果                                                                          |
+| --------------- | ----------------------------------------------------------------------------- |
+| saved words     | `receipt`、`latte`                                                             |
+| saved phrases   | `for here`、`to go`                                                            |
+| top context     | `coffee_shop`                                                                 |
 | recent keywords | `get`、`latte`、`milk`、`how`、`much`、`detective`、`found`、`clue`、`baker`、`street` |
-| review_today | `4` |
+| review_today    | `4`                                                                           |
 
 ## 服务状态记录
 
-| 字段 | 内容 |
-| --- | --- |
-| 当前进程 | `48024` |
+| 字段   | 内容                       |
+| ---- | ------------------------ |
+| 当前进程 | `48024`                  |
 | 本机访问 | `http://127.0.0.1:8000/` |
 | 停止命令 | `Stop-Process -Id 48024` |
 
