@@ -2,10 +2,15 @@ import network
 import time
 
 
+# 这个文件只用于 Task C1 的网络连通性验证。
+# 它不负责 SceneLingo 业务页面，也不请求后端 API；
+# 这里只确认 CYD 能连上热点，并打印后续 API 联调需要的网络字段。
+
 # C1 配置区。
 # 这里不要填写 eduroam，因为 eduroam 是 WPA2-Enterprise，
 # 当前 CYD MicroPython 固件没有暴露企业网 EAP 配置参数。
 # 推荐使用 Windows Mobile Hotspot、手机热点，或学校提供的普通 WPA2 IoT 网络。
+# 提交代码前保持 CHANGE_ME，占位符不要替换成真实 Wi-Fi 密码。
 WIFI_SSID = "CHANGE_ME"
 WIFI_PASSWORD = "CHANGE_ME"
 
@@ -29,6 +34,8 @@ def connect_wifi(timeout_s=25):
     print("Connecting to Wi-Fi:", WIFI_SSID)
     wlan.connect(WIFI_SSID, WIFI_PASSWORD)
 
+    # MicroPython 在连接过程中会返回数字状态码。
+    # 常见结果：1010 表示已连接；负数或长时间不变通常表示连接失败或认证失败。
     start = time.time()
     while not wlan.isconnected() and time.time() - start < timeout_s:
         print("status:", wlan.status())
