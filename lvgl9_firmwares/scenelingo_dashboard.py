@@ -83,6 +83,18 @@ _DISPLAY_BUS_CS = const(15)
 _DISPLAY_BACKLIGHT_PIN = const(21)
 
 
+# ==================== C12 小屏幕显示规则常量 ====================
+# C12 要求：每屏最多 3-5 个主要元素，按钮要大，长文本优先截断。
+# 所有截断和上限统一从这里读取，修改一处即影响所有页面，不需要逐页调整。
+_C12_MAX_KW      = const(5)   # 每屏 keyword 上限（Insight View）
+_C12_MAX_PH      = const(3)   # 每屏 phrase 上限（Insight View / Dashboard）
+_C12_MAX_WORDS   = const(5)   # Dashboard saved_words 最多显示条数
+_C12_KW_CHARS    = const(14)  # keyword 按钮文本截断长度（适配 108px 宽按钮）
+_C12_PH_CHARS    = const(30)  # phrase 按钮文本截断长度（适配 210px 宽按钮）
+_C12_SUM_CHARS   = const(48)  # summary 截断长度（最多 1 句）
+_C12_LABEL_CHARS = const(40)  # Dashboard 普通标签文本截断长度
+
+
 # ==================== Mock 数据 ====================
 # C3 把 4 个 MVP context 的 mock 数据集中放在这里。
 # UI 页面只调用 fetch_context() / fetch_dashboard()，后续换真实 API 时不需要重写页面。
@@ -658,10 +670,10 @@ def _render_insight(data):
     context = data.get("detected_context", {})
     context_id = context.get("id", "coffee_shop")
     title = context.get("title", "Context")
-    # C8 要求至少 5 个 keywords，截取前 5 个防止超出屏幕高度。
-    keywords = (data.get("keywords") or [])[:5]
-    # C8 要求至少 3 个 phrases，截取前 3 个。
-    phrases = (data.get("phrases") or [])[:3]
+    # C12 规则：keyword 最多 _C12_MAX_KW 个，超出部分不显示，防止超出屏幕高度。
+    keywords = (data.get("keywords") or [])[:_C12_MAX_KW]
+    # C12 规则：phrase 最多 _C12_MAX_PH 个。
+    phrases = (data.get("phrases") or [])[:_C12_MAX_PH]
     summary = data.get("summary", "")
 
     scr = lv.obj()
@@ -682,7 +694,8 @@ def _render_insight(data):
         if i > 0 and i % 2 == 0:
             y_kw += 30
         x_ofs = -59 if i % 2 == 0 else 59
-        add_button(scr, kw[:14], y_kw,
+        # C12：keyword 文本截断到 _C12_KW_CHARS 字符，适配 108px 按钮宽度。
+        add_button(scr, kw[:_C12_KW_CHARS], y_kw,
                    lambda kw=kw: handle_save(kw, "word", context_id),
                    108, 26, x_ofs)
 
@@ -695,13 +708,14 @@ def _render_insight(data):
     # 用 lambda 默认参数捕获 ph，避免闭包陷阱。
     y_ph = y_ph_hdr + 18
     for ph in phrases:
-        add_button(scr, ph[:30], y_ph,
+        # C12：phrase 文本截断到 _C12_PH_CHARS 字符，防止长 phrase 撑破 210px 按钮。
+        add_button(scr, ph[:_C12_PH_CHARS], y_ph,
                    lambda ph=ph: handle_save(ph, "phrase", context_id),
                    210, 26)
         y_ph += 28
 
-    # summary 只取第一句最多 48 字符，避免占用过多纵向空间。
-    summary_short = (summary.split(".")[0])[:48] if summary else ""
+    # C12：summary 只取第一句，截断到 _C12_SUM_CHARS 字符（最多 1 句）。
+    summary_short = (summary.split(".")[0])[:_C12_SUM_CHARS] if summary else ""
     add_label(scr, summary_short, y_ph + 4, 16)
 
     # 状态行：显示保存结果，供 handle_save() 回写（Saved / Save failed 等）。
@@ -765,14 +779,14 @@ def _render_dashboard():
     # fetch_dashboard() 在网络失败时返回 MOCK_DASHBOARD，保证此处不为 None。
     data = fetch_dashboard()
 
-    # C9 最多显示 5 个 saved words，小屏幕限制不宜过多。
-    words = data.get("saved_words", [])[:5]
-    # C9 最多显示 3 个 saved phrases。
-    phrases = data.get("saved_phrases", [])[:3]
+    # C12 规则：saved words 最多显示 _C12_MAX_WORDS 个，小屏幕不宜过多。
+    words = data.get("saved_words", [])[:_C12_MAX_WORDS]
+    # C12 规则：saved phrases 最多显示 _C12_MAX_PH 个。
+    phrases = data.get("saved_phrases", [])[:_C12_MAX_PH]
     top_context = str(data.get("top_context") or "-")
     review_today = str(data.get("review_today", 0))
 
-    # 将列表转为逗号分隔文本，截断防止换行过多。
+    # 将列表转为逗号分隔文本，C12 规则截断到 _C12_LABEL_CHARS 字符防止换行过多。
     word_text = ", ".join(item.get("item_text", "") for item in words) or "None yet"
     phrase_text = ", ".join(item.get("item_text", "") for item in phrases) or "None yet"
 
@@ -785,12 +799,13 @@ def _render_dashboard():
     # Saved Words 区块：灰色小标题 + 内容标签（可换行，高 32px）。
     sw_hdr = add_label(scr, "Saved Words", 36, 16)
     sw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
-    add_label(scr, word_text[:40], 55, 32)
+    # C12：标签文本截断到 _C12_LABEL_CHARS 字符，防止换行挤占其他元素空间。
+    add_label(scr, word_text[:_C12_LABEL_CHARS], 55, 32)
 
     # Saved Phrases 区块：灰色小标题 + 内容标签。
     sp_hdr = add_label(scr, "Saved Phrases", 92, 16)
     sp_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
-    add_label(scr, phrase_text[:40], 111, 32)
+    add_label(scr, phrase_text[:_C12_LABEL_CHARS], 111, 32)
 
     # 统计信息：Top Context 和 Review Today。
     add_label(scr, "Top: " + top_context[:24], 148, 22)
