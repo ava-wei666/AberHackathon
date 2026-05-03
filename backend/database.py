@@ -120,26 +120,29 @@ def save_review_item(item_text: str, item_type: str, source_context: str | None 
 
 
 def get_dashboard() -> dict[str, Any]:
-    # 汇总 CYD dashboard 需要的四类信息：saved words、saved phrases、top context、recent keywords。
+    # 汇总 CYD dashboard 需要的五类信息：saved_words、saved_phrases、top_context、recent_keywords、review_today。
     with get_connection() as connection:
-        saved_words = connection.execute(
+        # 取最近的 word 复习项；多取一些是为了在按 item_text 去重后仍能凑够 CYD 展示数量。
+        word_rows = connection.execute(
             """
             SELECT item_text, source_context, created_at
             FROM review_items
             WHERE item_type = 'word'
             ORDER BY created_at DESC, id DESC
-            LIMIT 20
+            LIMIT 60
             """
         ).fetchall()
-        saved_phrases = connection.execute(
+        # 同样处理 phrase；CYD 屏幕窄，重复的 item_text 会挤占空间，统一在下方去重。
+        phrase_rows = connection.execute(
             """
             SELECT item_text, source_context, created_at
             FROM review_items
             WHERE item_type = 'phrase'
             ORDER BY created_at DESC, id DESC
-            LIMIT 20
+            LIMIT 60
             """
         ).fetchall()
+        # top_context 基于分析历史里 detected_context 出现次数最多的 id。
         top_context = connection.execute(
             """
             SELECT detected_context, COUNT(*) AS count
@@ -149,6 +152,7 @@ def get_dashboard() -> dict[str, Any]:
             LIMIT 1
             """
         ).fetchone()
+        # recent_keywords 取自最近 10 次分析的 keywords_json。
         recent_rows = connection.execute(
             """
             SELECT keywords_json
@@ -157,19 +161,33 @@ def get_dashboard() -> dict[str, Any]:
             LIMIT 10
             """
         ).fetchall()
+        # review_today 直接从 SQL 用本地日期过滤，避免 Python 端再做时区换算。
+        review_today_row = connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM review_items
+            WHERE DATE(created_at, 'localtime') = DATE('now', 'localtime')
+            """
+        ).fetchone()
 
+    # 按 item_text 去重，保留最近一次保存记录，CYD dashboard 上不会出现重复条目。
+    saved_words = _deduplicate_review_rows(word_rows, limit=20)
+    saved_phrases = _deduplicate_review_rows(phrase_rows, limit=20)
+
+    # recent_keywords 按出现顺序去重，过滤掉空字符串，保证 CYD 直接显示不需要再过滤。
     recent_keywords: list[str] = []
     for row in recent_rows:
         for keyword in json.loads(row["keywords_json"]):
-            if keyword not in recent_keywords:
-                recent_keywords.append(keyword)
+            cleaned_keyword = keyword.strip() if isinstance(keyword, str) else ""
+            if cleaned_keyword and cleaned_keyword not in recent_keywords:
+                recent_keywords.append(cleaned_keyword)
 
     return {
-        "saved_words": [_review_from_row(row) for row in saved_words],
-        "saved_phrases": [_review_from_row(row) for row in saved_phrases],
+        "saved_words": saved_words,
+        "saved_phrases": saved_phrases,
         "top_context": top_context["detected_context"] if top_context else None,
         "recent_keywords": recent_keywords[:10],
-        "review_today": len(saved_words) + len(saved_phrases),
+        "review_today": int(review_today_row["count"]) if review_today_row else 0,
     }
 
 
@@ -229,3 +247,18 @@ def _review_from_row(row: sqlite3.Row) -> dict[str, Any]:
         "source_context": row["source_context"],
         "created_at": row["created_at"],
     }
+
+
+def _deduplicate_review_rows(rows: list[sqlite3.Row], limit: int) -> list[dict[str, Any]]:
+    # 按 item_text 去重，保留最近一次保存（rows 已按 created_at DESC 排序），最多返回 limit 个。
+    seen_item_texts: set[str] = set()
+    unique_items: list[dict[str, Any]] = []
+    for row in rows:
+        item_text = row["item_text"]
+        if item_text in seen_item_texts:
+            continue
+        seen_item_texts.add(item_text)
+        unique_items.append(_review_from_row(row))
+        if len(unique_items) >= limit:
+            break
+    return unique_items
