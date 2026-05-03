@@ -433,6 +433,45 @@ def normalize_context(data):
 #         否则 CYD 判定失败并显示 "Save failed"。
 
 
+# ==================== C14 Web-CYD 联调点 - 给线 B 的反馈 ====================
+# 线 B 负责 Web 输入和 Web Dashboard。CYD 和 Web 共用同一套后端 API，
+# 通过 GET /dashboard 读取、POST /save_item 写入来保持数据同步。
+# 线 C 不修改 web/index.html，只列出需要线 B 帮忙验证的联调点。
+#
+# ── 共享数据模型 ────────────────────────────────────────────────────────
+#   写入方：Web（用户在网页输入文本提交）和 CYD（用户点击 keyword / phrase 按钮）
+#   读取方：Web Dashboard 和 CYD Dashboard View
+#   数据流：
+#     Web 保存 → POST /save_item → 后端存储
+#                                       ↑ 共用
+#     CYD 保存 → POST /save_item → 后端存储
+#     GET /dashboard ← Web 读取（刷新页面）
+#     GET /dashboard ← CYD 读取（点击 Refresh 按钮）
+#
+# ── 线 B 需要帮忙验证的联调点 ──────────────────────────────────────────
+#   1. Web 保存一个 word 后，CYD 点 Refresh Dashboard 能看到该 word
+#      → CYD 依赖 saved_words[].item_text 字段
+#   2. CYD 点击 keyword 保存 word 后，Web 刷新 Dashboard 能看到该 word
+#      → Web Dashboard 需要展示 saved_words[].item_text
+#   3. CYD 点击 phrase 保存 phrase 后，Web 刷新 Dashboard 能看到该 phrase
+#      → Web Dashboard 需要展示 saved_phrases[].item_text
+#
+# ── Web 页面字段适配 CYD 展示 ──────────────────────────────────────────
+#   CYD 显示的 Dashboard 字段（均来自 GET /dashboard 响应）：
+#     saved_words[].item_text   — 显示为 "Words: latte, milk"
+#     saved_phrases[].item_text — 显示为 "Phrases: Can I Get"
+#     top_context               — 显示为 "Top: coffee_shop"
+#     review_today              — 显示为 "Review Today: 3"
+#   CYD 当前不显示的字段（Web 可自由使用）：
+#     recent_keywords、source_context、created_at 等
+#
+# ── 注意事项 ────────────────────────────────────────────────────────────
+#   - Web 的 POST /save_item 请求也需要包含 source_context 字段，
+#     否则后端无法记录来源 context，top_context 统计可能为空。
+#   - CYD 不读取 Web 页面的任何 HTML / JS 状态，只通过 API 同步数据。
+#   - 线 C 不修改 web/index.html。
+
+
 def init_display():
     # 业务文件独立初始化屏幕和触摸，不依赖 touch_color_test.py。
     global display, indev, lv_task_handler
