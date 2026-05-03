@@ -431,11 +431,12 @@ def add_label(parent, text, y, height=28):
     return label
 
 
-def add_button(parent, text, y, cb, width=190, height=44):
+def add_button(parent, text, y, cb, width=190, height=44, x_ofs=0):
     # 统一的大按钮，方便手指点击，也方便后续 C5-C10 复用。
+    # x_ofs 支持水平偏移，C8 keyword 2 列布局使用 ±59px 偏移实现双列。
     btn = lv.button(parent)
     btn.set_size(width, height)
-    btn.align(lv.ALIGN.TOP_MID, 0, y)
+    btn.align(lv.ALIGN.TOP_MID, x_ofs, y)
     btn.set_style_bg_color(lv.color_hex(0x2F6FED), lv.PART.MAIN)
     btn.set_style_radius(6, lv.PART.MAIN)
     btn.remove_flag(lv.obj.FLAG.SCROLLABLE)
@@ -606,48 +607,86 @@ def open_context(context_id):
     go_to("insight", data)
 
 
+# ==================== C8 Insight View ====================
+# C8 要求：context 标题 + 至少 5 个可点击 keyword（保存为 word）
+#          + 至少 3 个可点击 phrase（保存为 phrase）+ summary + Back。
+# keyword 采用 2 列布局（每列宽 108px，x 偏移 ±59px）节省纵向空间。
+# phrase 采用全宽按钮（210px）保证长文本可读，截断到 30 字符防止撑破布局。
+# summary 只取第一句最多 48 字符，避免占用过多纵向空间。
+
 def _render_insight(data):
     global status_label
     data = data or MOCK_ANALYSIS
     context = data.get("detected_context", {})
     context_id = context.get("id", "coffee_shop")
     title = context.get("title", "Context")
+    # C8 要求至少 5 个 keywords，截取前 5 个防止超出屏幕高度。
     keywords = (data.get("keywords") or [])[:5]
+    # C8 要求至少 3 个 phrases，截取前 3 个。
     phrases = (data.get("phrases") or [])[:3]
     summary = data.get("summary", "")
 
     scr = lv.obj()
     set_common_screen(scr)
+
+    # 页面标题显示 context 名称（例如 "Coffee Shop"）。
     add_title(scr, title)
-    add_label(scr, "Keywords", 46, 22)
 
-    keyword_text = "  ".join(keywords) if keywords else "No keywords"
-    add_button(scr, keyword_text[:38], 74,
-               lambda: handle_save(keywords[0] if keywords else "", "word", context_id), 212, 38)
+    # "Top Keywords" 区块标签，灰色小字，与按钮区分视觉层级。
+    kw_hdr = add_label(scr, "Top Keywords", 36, 16)
+    kw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
 
-    add_label(scr, "Phrases", 122, 22)
-    phrase_text = " | ".join(phrases) if phrases else "No phrases"
-    add_button(scr, phrase_text[:38], 150,
-               lambda: handle_save(phrases[0] if phrases else "", "phrase", context_id), 212, 38)
+    # keyword 按钮 2 列排列：偶数索引左列（x=-59），奇数索引右列（x=+59）。
+    # 每 2 个关键词占一行，行高 30px。
+    # 用 lambda 默认参数捕获 kw，避免闭包陷阱（同 C7 context 按钮写法）。
+    y_kw = 55
+    for i, kw in enumerate(keywords):
+        if i > 0 and i % 2 == 0:
+            y_kw += 30
+        x_ofs = -59 if i % 2 == 0 else 59
+        add_button(scr, kw[:14], y_kw,
+                   lambda kw=kw: handle_save(kw, "word", context_id),
+                   108, 26, x_ofs)
 
-    add_label(scr, summary[:95], 200, 42)
-    status_label = add_label(scr, "", 244, 20)
-    add_button(scr, "Back", 270, go_back, 90, 36)
+    # "Useful Phrases" 区块标签。
+    y_ph_hdr = y_kw + 30
+    ph_hdr = add_label(scr, "Useful Phrases", y_ph_hdr, 16)
+    ph_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+
+    # phrase 按钮全宽（210px），截断到 30 字符防止长 phrase 撑破布局。
+    # 用 lambda 默认参数捕获 ph，避免闭包陷阱。
+    y_ph = y_ph_hdr + 18
+    for ph in phrases:
+        add_button(scr, ph[:30], y_ph,
+                   lambda ph=ph: handle_save(ph, "phrase", context_id),
+                   210, 26)
+        y_ph += 28
+
+    # summary 只取第一句最多 48 字符，避免占用过多纵向空间。
+    summary_short = (summary.split(".")[0])[:48] if summary else ""
+    add_label(scr, summary_short, y_ph + 4, 16)
+
+    # 状态行：显示保存结果，供 handle_save() 回写（Saved / Save failed 等）。
+    status_label = add_label(scr, "", y_ph + 22, 14)
+
+    # Back 按钮固定在状态行下方，返回 Context Select。
+    add_button(scr, "Back", y_ph + 38, go_back, 90, 28)
+
     lv.screen_load(scr)
 
 
 def handle_save(item_text, item_type, source_context):
+    # 空文本不发请求，直接提示用户。
     if not item_text:
         set_status("Nothing to save")
         return
 
     result = save_item(item_text, item_type, source_context)
     if result and result.get("saved"):
+        # mock 模式和真实 API 均返回 {"saved": True}，统一显示 Saved。
         set_status("Saved")
-    elif USE_MOCK_DATA:
-        set_status("Saved mock")
     else:
-        # 真实 API 失败时明确提示失败，但页面继续可用。
+        # 真实 API 失败时明确提示，但页面保持可用，不崩溃。
         set_status("Save failed")
 
 
