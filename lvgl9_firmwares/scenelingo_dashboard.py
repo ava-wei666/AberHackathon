@@ -383,6 +383,8 @@ def add_mock_saved_item(item_text, item_type):
 
 
 def normalize_context(data):
+    # C13：/context/{id} 返回字段可能用 keywords/phrases 或 seed_keywords/seed_phrases，
+    # 这里统一做 fallback 转换，兼容线 A 两种命名方式，CYD UI 层无需关心。
     return {
         "detected_context": {
             "id": data.get("id", "coffee_shop"),
@@ -392,6 +394,43 @@ def normalize_context(data):
         "phrases": data.get("phrases") or data.get("seed_phrases") or MOCK_ANALYSIS["phrases"],
         "summary": data.get("summary", MOCK_ANALYSIS["summary"]),
     }
+
+
+# ==================== C13 API 契约 - 给线 A 的反馈 ====================
+# 以下是 CYD 对各接口字段的最低要求，供线 A 后端参考。
+# 线 C 不要求修改数据库结构，只反馈 CYD 显示层的字段依赖。
+#
+# ── GET /contexts ──────────────────────────────────────────────────────
+#   期望格式：
+#     {"real_world": [{"id": "coffee_shop", "title": "Coffee Shop"}, ...],
+#      "story":      [{"id": "kings_cross",  "title": "King's Cross"}, ...]}
+#   注意：CYD 内部将 real_world（下划线）映射为 real-world（连字符），线 A 无需改动。
+#
+# ── GET /context/{id} ──────────────────────────────────────────────────
+#   接受以下任意一种格式（normalize_context() 统一处理两种命名）：
+#     方案 A：{"id": "...", "title": "...", "keywords": [...], "phrases": [...], "summary": "..."}
+#     方案 B：{"id": "...", "title": "...", "seed_keywords": [...], "seed_phrases": [...], "summary": "..."}
+#   字段长度建议（超出 CYD 会按 C12 常量截断显示）：
+#     keywords  每项建议 ≤ 14 字符（_C12_KW_CHARS），否则按钮文字截断
+#     phrases   每项建议 ≤ 30 字符（_C12_PH_CHARS），否则按钮文字截断
+#     summary   建议 1 句，CYD 只显示第一句前 48 字符（_C12_SUM_CHARS）
+#
+# ── GET /dashboard ─────────────────────────────────────────────────────
+#   期望格式：
+#     {"saved_words":  [{"item_text": "latte"}, ...],
+#      "saved_phrases": [{"item_text": "Can I Get"}, ...],
+#      "top_context":  "coffee_shop",
+#      "review_today": 3}
+#   注意：每个 item 的字段名必须是 item_text（完全匹配），CYD 不做字段别名处理。
+#         top_context 为字符串 context id；review_today 为整数。
+#
+# ── POST /save_item ────────────────────────────────────────────────────
+#   CYD 发送：
+#     {"item_text": "latte", "item_type": "word", "source_context": "coffee_shop"}
+#     item_type 只会是 "word" 或 "phrase"，不会传其他值。
+#   期望返回：{"saved": true}
+#   注意：saved 字段必须为布尔 true（不是字符串 "true"），
+#         否则 CYD 判定失败并显示 "Save failed"。
 
 
 def init_display():
