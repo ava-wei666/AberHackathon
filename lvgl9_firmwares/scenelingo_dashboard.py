@@ -28,6 +28,35 @@ AUTO_CONNECT_WIFI = False
 # 后续 C11 真实 API 联调时，把这里改成 False 即可复用同一套 UI 结构。
 USE_MOCK_DATA = True
 
+# ==================== C11 联调切换指南 ====================
+# 切换到真实 API 只需修改以下 4 项（切勿把真实密码和 IP 提交到 Git）：
+#
+#   API_BASE         = "http://<laptop 局域网 IP>:8000"
+#   WIFI_SSID        = "<Wi-Fi 名称>"
+#   WIFI_PASSWORD    = "<Wi-Fi 密码>"
+#   AUTO_CONNECT_WIFI = True
+#   USE_MOCK_DATA    = False
+#
+# 后端启动命令（在 laptop 上执行）：
+#   uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
+#
+# 查找 laptop 局域网 IP：
+#   Windows : ipconfig  -> 找 "IPv4 地址"
+#   Mac/Linux: ifconfig -> 找 "inet "
+#
+# 联调顺序（C11 验收步骤）：
+#   1. CYD 进入 Dashboard，点 Refresh -> 看到真实数据
+#   2. Web 保存一个 word
+#   3. CYD Refresh Dashboard -> 看到 Web 保存的 word
+#   4. CYD 点击 keyword 保存 phrase
+#   5. Web Refresh Dashboard -> 看到 CYD 保存的 phrase
+#
+# 遇到 API probe FAILED：
+#   - 后端是否用 --host 0.0.0.0 启动
+#   - CYD 和 laptop 是否同一 Wi-Fi
+#   - API_BASE 是否是 laptop 局域网 IP（不是 localhost）
+#   - Windows 防火墙是否拦截 8000 端口
+
 
 # ==================== CYD 显示 / 触摸配置 ====================
 # 这些引脚和方向参数沿用 C0 的 touch_color_test.py，避免改坏硬件初始化路径。
@@ -708,6 +737,22 @@ def handle_save(item_text, item_type, source_context):
         set_status("Save failed")
 
 
+# ==================== C11 API 联调辅助 ====================
+# C11 在真实 API 模式下，启动时调用 probe_api() 快速验证后端可达。
+# 结果只打印到串口（mpremote / Thonny REPL），不影响 UI 启动流程。
+
+def probe_api():
+    # 发一次 GET /dashboard 作为连通性探测。
+    # 成功返回 True，失败返回 False；失败时打印排查提示，但不阻塞 UI。
+    print("--> C11 probe:", API_BASE + "/dashboard")
+    result = api_get("/dashboard")
+    if result is not None:
+        print("--> API probe OK")
+        return True
+    print("--> API probe FAILED. Check: API_BASE / Wi-Fi / firewall / --host 0.0.0.0")
+    return False
+
+
 # ==================== C9 Dashboard View ====================
 # C9 要求：分区显示 Saved Words / Saved Phrases / Top Context / Review Today，
 # 以及 Refresh（重新拉取 /dashboard）和 Back 按钮。
@@ -769,14 +814,25 @@ def _render_dashboard():
 def main():
     gc.collect()
     init_display()
+
+    # Wi-Fi 连接（C11 真实 API 模式下必须开启，mock 模式可跳过）。
     if AUTO_CONNECT_WIFI:
         connect_wifi()
+
+    # C11：真实 API 模式下启动时探测后端连通性，结果打印到串口方便排查。
+    # mock 模式下跳过探测，保证离线也能正常启动。
+    if not USE_MOCK_DATA:
+        probe_api()
+
     show_home()
 
+    # 启动诊断信息，方便联调时通过串口快速确认环境。
     print("--> SceneLingo CYD dashboard ready.")
-    print("--> Micropython Version:", os.uname().release)
-    print("--> LVGL Version: %s.%s" % (lv.version_major(), lv.version_minor()))
+    print("--> MicroPython:", os.uname().release)
+    print("--> LVGL: %s.%s" % (lv.version_major(), lv.version_minor()))
     print("--> API_BASE:", API_BASE)
+    print("--> USE_MOCK_DATA:", USE_MOCK_DATA)
+    print("--> AUTO_CONNECT_WIFI:", AUTO_CONNECT_WIFI)
 
 
 main()
