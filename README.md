@@ -1,4 +1,4 @@
-# SceneLingo
+# Scene Words
 
 Context-based language learning MVP for a CYD dashboard, a small web input page, and a FastAPI NLP backend.
 
@@ -15,7 +15,7 @@ web/
 lvgl9_firmwares/
   touch_color_test.py
 requirements.txt
-scenelingo.db        created automatically when the API starts
+scene_words.db       created automatically when the API starts
 ```
 
 ## Run Backend

@@ -1,4 +1,4 @@
-import network
+SSIDimport network
 import time
 
 

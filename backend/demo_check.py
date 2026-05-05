@@ -1,4 +1,4 @@
-"""SceneLingo 4 段 Demo 文本自测脚本（线 A A17）。
+"""Scene Words 4 段 Demo 文本自测脚本（线 A A17）。
 
 执行方式（在项目根目录 `C:\\hackathon`）：
 

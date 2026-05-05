@@ -1,4 +1,4 @@
-"""SceneLingo 线 A 后端自测脚本。
+"""Scene Words 线 A 后端自测脚本。
 
 执行方式（在项目根目录 `C:\\hackathon`）：
 

@@ -779,6 +779,68 @@ The detective found a clue on Baker Street and tried to solve the case.
 
 不要优先引入新库解决小问题。
 
+## Task A18 - DELETE /saved_item/{id}
+
+**产品动机**：用户保存了错误的词没有出口，复习列表越来越脏。删除是"学习闭环"的最后一块。线 B 的 B15 依赖这个接口。
+
+目标：新增删除接口，让 Web Dashboard 可以移除单条复习项。
+
+接口：
+
+```
+DELETE /saved_item/{id}
+```
+
+返回：
+
+```json
+{ "id": 3, "deleted": true }
+```
+
+找不到 id 时返回 404：
+
+```json
+{ "detail": "Item not found" }
+```
+
+文件：`backend/main.py`（新增路由）、`backend/database.py`（新增 `delete_review_item`）
+
+验收：
+
+- `DELETE /saved_item/3` 成功后，`GET /dashboard` 的 `saved_words` / `saved_phrases` 里不再有该条目
+- 对不存在的 id 返回 HTTP 404
+- 删除后数据库确实少了一条（可用 selftest 验证）
+
+---
+
+## Task A19 - /dashboard 返回 top_context_title
+
+**产品动机**：Dashboard 现在显示 `"top_context": "coffee_shop"`，Web 和 CYD 都要自己做 id → title 映射，而且容易不一致。后端多查一次就能解决。
+
+目标：`GET /dashboard` 在返回 `top_context` 的同时，附带 `top_context_title`。
+
+改动位置：`backend/database.py` 的 `get_dashboard()`，拿到 `top_context` id 后去 `contexts` 表查 `title`。
+
+返回字段变化（新增一个字段，不删旧字段，向后兼容）：
+
+```json
+{
+  "top_context": "coffee_shop",
+  "top_context_title": "Coffee Shop",
+  ...
+}
+```
+
+没有任何分析记录时两个字段都为 `null`。
+
+验收：
+
+- 有分析记录时 `top_context_title` 返回对应 context 的 `title`
+- 没有记录时 `top_context_title` 为 `null`
+- 不影响已有字段，线 B / 线 C 旧代码不需要改动仍可运行
+
+---
+
 ## 线 A 完成标准
 
 线 A 完成时，必须满足：

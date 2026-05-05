@@ -499,6 +499,55 @@ Back
 
 线 C 不修改 `web/index.html`。
 
+## Task C15 - LVGL 配色对齐英格兰绿主题
+
+**产品动机**：CYD 和 Web 现在看起来像两个不同产品。统一配色系统是"这是一套完整产品"的视觉证明，对作品集展示非常重要。
+
+目标：把 `scenelingo_dashboard.py` 里散落的硬编码颜色提取成命名颜色常量，并对齐 Web 端的英格兰绿色系。
+
+在文件顶部"显示配置区"新增颜色常量块（放在 `_C12_*` 常量旁边）：
+
+```python
+# ==================== C15 配色常量（英格兰绿·乡村色系）====================
+# 与 web/index.html 的 CSS 变量系统对齐，保证 Web 和 CYD 属于同一产品视觉。
+_COL_PRIMARY    = lv.color_hex(0x2d4a1e)   # 英格兰深绿（按钮、标题）
+_COL_PRIMARY_LT = lv.color_hex(0x3d6428)   # 稍浅绿（按钮悬停 / 次要按钮）
+_COL_ACCENT     = lv.color_hex(0x8b6914)   # 铜金（点缀、保存成功提示）
+_COL_BG         = lv.color_hex(0xf5f1e8)   # 象牙白（页面背景）
+_COL_SURFACE    = lv.color_hex(0xffffff)   # 卡片白（列表项底色）
+_COL_TEXT       = lv.color_hex(0x1c1c1c)   # 正文墨黑
+_COL_MUTED      = lv.color_hex(0x5a5a4a)   # 次要文字暖灰（副标题、label）
+_COL_DANGER     = lv.color_hex(0x8b0000)   # 深红（保存失败提示）
+```
+
+替换规则（逐页检查，不要批量替换，先确认颜色含义再改）：
+
+| 旧用法 | 替换为 | 说明 |
+|--------|--------|------|
+| `lv.color_hex(0x8899AA)` 等灰色副标题 | `_COL_MUTED` | 副标题、小标签 |
+| 主按钮背景色（目前是 LVGL 默认蓝） | `_COL_PRIMARY` | Real-world / Story / Dashboard 按钮 |
+| keyword 按钮背景 | `_COL_PRIMARY_LT` | Insight View 里的 keyword 按钮 |
+| 保存成功状态文字颜色 | `_COL_ACCENT` | `Saved: xxx` 提示 |
+| 保存失败状态文字颜色 | `_COL_DANGER` | `Save failed` 提示 |
+| 屏幕背景（如果有手动设置） | `_COL_BG` | 整体背景 |
+
+**不需要做的事**：
+
+- 不需要改字体（LVGL 自带字体，不支持自定义 Web 字体）
+- 不需要做动画
+- 不需要改布局结构
+
+验收：
+
+- Home 页按钮背景是深绿 `#2d4a1e`，不是 LVGL 默认蓝
+- Insight View 里 keyword 按钮背景是稍浅绿 `#3d6428`
+- 保存成功的状态文字是铜金色
+- 保存失败的状态文字是深红
+- 屏幕整体背景接近象牙白（如果硬件支持设置）
+- 颜色常量集中在文件顶部一个区块，不散落在各 render 函数里
+
+---
+
 ## 线 C 完成标准
 
 线 C 完成时，必须满足：

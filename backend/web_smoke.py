@@ -1,4 +1,4 @@
-"""SceneLingo Web 闭环冒烟脚本（线 A 给线 B 联调用）。
+"""Scene Words Web 闭环冒烟脚本（线 A 给线 B 联调用）。
 
 执行方式（在项目根目录 `C:\\hackathon`，前提是 Uvicorn 已经启动）：
 

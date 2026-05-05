@@ -7,7 +7,7 @@ from typing import Any
 
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
-DB_PATH = ROOT_DIR / "scenelingo.db"
+DB_PATH = ROOT_DIR / "scene_words.db"
 SEED_PATH = Path(__file__).with_name("seed_data.json")
 
 

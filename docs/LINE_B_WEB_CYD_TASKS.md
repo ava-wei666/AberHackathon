@@ -433,6 +433,219 @@ review_today
 
 线 B 不写 CYD 页面，也不调整 LVGL。
 
+## Task B12 - 视觉基础：CDN 引入 + CSS 变量系统
+
+**产品动机**：当前页面是开发者原型观感，作为作品集展示需要第一眼建立"这是一个有设计感的产品"的印象。所有后续视觉任务都依赖本任务建立的变量系统。
+
+目标：在 `web/index.html` 的 `<head>` 里引入三个外部资源，并定义项目级 CSS 变量。
+
+引入资源（全部 CDN，不需要 npm）：
+
+```html
+<!-- Pico CSS 基础 reset -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.classless.min.css">
+
+<!-- 英伦字体：标题装饰 / section 标题 / 正文 -->
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English&family=Playfair+Display:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+<!-- 图标（按需加载，不拉全量包） -->
+<script src="https://code.iconify.design/iconify-icon/1.0.8/iconify-icon.min.js" defer></script>
+```
+
+在现有 `<style>` 的 `:root` 里替换或追加以下变量：
+
+```css
+:root {
+  /* 英格兰绿·乡村色系 */
+  --sw-bg:           #f5f1e8;   /* 象牙白页面背景 */
+  --sw-surface:      #ffffff;   /* 卡片白 */
+  --sw-primary:      #2d4a1e;   /* 英格兰深绿（主按钮、标题） */
+  --sw-primary-hover:#3d6428;   /* 悬停稍浅 */
+  --sw-accent:       #8b6914;   /* 铜金点缀 */
+  --sw-text:         #1c1c1c;   /* 正文墨黑 */
+  --sw-text-muted:   #5a5a4a;   /* 次要文字暖灰 */
+  --sw-border:       #c8bda0;   /* 边框暖褐 */
+  --sw-chip-word:    #e8f0e0;   /* keyword chip 浅绿底 */
+  --sw-chip-phrase:  #f5e8d0;   /* phrase chip 浅金底 */
+  --sw-danger:       #8b0000;   /* 删除 / 错误深红 */
+}
+```
+
+验收：
+
+- 浏览器打开页面，字体已切换为衬线体（不再是系统默认 sans-serif）
+- 页面背景色为象牙白 `#f5f1e8`，不是纯白
+- 控制台无 CDN 加载错误
+- 不引入 React / Vue / Node / npm，不新增构建步骤
+
+---
+
+## Task B13 - 品牌 Header 重构
+
+**产品动机**：页面首屏是产品的名片。当前 `<h1>Scene Words</h1>` 没有任何品牌感。一个有辨识度的 header 能让评委或招聘者在 3 秒内判断"这是认真做的项目"。
+
+目标：重构页面 `<header>` 区域，建立英伦乡村风品牌形象。
+
+视觉规格：
+
+| 元素 | 字体 | 大小 | 颜色 |
+|------|------|------|------|
+| `<h1>Scene Words</h1>` | IM Fell English | `clamp(36px, 5vw, 56px)` | `--sw-primary` |
+| 副标题 `Learn English in Context` | Playfair Display italic | 18px | `--sw-text-muted` |
+| 分割线装饰 | 纯 CSS | — | `--sw-accent` |
+
+分割线 CSS（header 底部）：
+
+```css
+.sw-divider {
+  border: none;
+  border-top: 2px solid var(--sw-primary);
+  border-bottom: 1px solid var(--sw-accent);
+  margin: 1rem 0 2rem;
+  position: relative;
+}
+.sw-divider::after {
+  content: '✦';
+  position: absolute;
+  left: 50%;
+  top: -11px;
+  transform: translateX(-50%);
+  background: var(--sw-bg);
+  color: var(--sw-accent);
+  padding: 0 12px;
+  font-size: 16px;
+}
+```
+
+验收：
+
+- "Scene Words" 用 IM Fell English 大字显示，视觉上像英伦报纸标题
+- 副标题用 Playfair Display 斜体，位于主标题正下方
+- 标题区和正文区之间有带菱形的双线分割
+- 移动端不错位（使用 `clamp` 字号）
+
+---
+
+## Task B14 - 组件美化：chip、按钮、卡片
+
+**产品动机**：五个 section 当前视觉权重相同，用户无法快速判断重要信息在哪里。通过卡片层次和 chip 颜色区分，引导视线流向"detected context → keywords → phrases → save"。
+
+目标：统一五类视觉组件的样式。
+
+**Section 卡片**（每个 section 包裹 `<section class="sw-card">`）：
+
+```css
+.sw-card {
+  background: var(--sw-surface);
+  border: 1px solid var(--sw-border);
+  border-radius: 8px;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 1px 3px rgba(45, 74, 30, 0.08);
+}
+.sw-card h2 {
+  font-family: 'Playfair Display', serif;
+  color: var(--sw-primary);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 0.75rem;
+}
+```
+
+**Keyword chip**（`.chip.word`）：
+
+```css
+.chip { display: inline-block; border-radius: 4px; padding: 3px 10px; font-size: 13px; margin: 3px; font-family: 'Crimson Text', serif; }
+.chip.word   { background: var(--sw-chip-word);   color: var(--sw-primary); border: 1px solid #b8d4a0; }
+.chip.phrase { background: var(--sw-chip-phrase);  color: var(--sw-accent);  border: 1px solid #d4b87a; }
+```
+
+**主按钮**（Analyze / Save / Refresh）：
+
+```css
+.sw-btn-primary {
+  background: var(--sw-primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 20px;
+  font-family: 'Playfair Display', serif;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sw-btn-primary:hover { background: var(--sw-primary-hover); }
+.sw-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+```
+
+**状态 badge**（section 右上角 `status`）：小字 + 圆角底色，success 用 `#e8f0e0` 配深绿字，error 用淡红底深红字。
+
+验收：
+
+- keyword chip 是绿色系，phrase chip 是金色系，两类可以一眼区分
+- 五个 section 都是白色卡片，整体页面背景象牙白，层次分明
+- 主按钮深绿，非破坏性操作（Demo 按钮）用轮廓样式
+- 任何按钮 disabled 状态下不可误点
+
+---
+
+## Task B15 - Dashboard 升级：删除功能 + 场景名称显示
+
+**产品动机**：没有删除功能的复习列表是"只进不出"的数据垃圾桶，用户无法维护自己的词库。同时 `top_context` 显示原始 id（`coffee_shop`）不是产品该有的体验。
+
+前置条件：线 A 完成 A18（DELETE 接口）和 A19（top_context_title 字段）。
+
+目标：
+
+1. saved_words / saved_phrases 每条右侧加删除按钮
+2. top_context 显示 `top_context_title` 而不是 id
+
+**删除按钮逻辑**：
+
+```javascript
+async function deleteItem(id, type) {
+  await fetch(`${API_BASE}/saved_item/${id}`, { method: 'DELETE' });
+  loadDashboard(); // 删除成功后刷新
+}
+```
+
+注意：`/dashboard` 接口目前不返回每条 item 的 `id`，需要线 A 在 `saved_words` / `saved_phrases` 条目里附带 `id` 字段（和 A18/A19 一起确认）。
+
+**删除按钮样式**：
+
+```css
+.sw-btn-delete {
+  background: none;
+  border: none;
+  color: var(--sw-danger);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 6px;
+  opacity: 0.6;
+}
+.sw-btn-delete:hover { opacity: 1; }
+```
+
+**top_context 显示**：
+
+```javascript
+// 旧
+panel.textContent = dashboard.top_context ?? 'None yet';
+// 新
+panel.textContent = dashboard.top_context_title ?? dashboard.top_context ?? 'None yet';
+```
+
+验收：
+
+- saved_words / saved_phrases 每条右侧有小删除按钮
+- 点击删除后列表立即更新，不需要手动 Refresh
+- Dashboard 显示"Coffee Shop"而不是"coffee_shop"
+- 删除请求失败时按钮恢复，status 行显示错误提示
+
+---
+
 ## 线 B 完成标准
 
 线 B 完成时，必须满足：
