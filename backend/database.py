@@ -123,9 +123,10 @@ def get_dashboard() -> dict[str, Any]:
     # 汇总 CYD dashboard 需要的五类信息：saved_words、saved_phrases、top_context、recent_keywords、review_today。
     with get_connection() as connection:
         # 取最近的 word 复习项；多取一些是为了在按 item_text 去重后仍能凑够 CYD 展示数量。
+        # A18: SELECT 里加 id，供 Web 删除按钮调用 DELETE /saved_item/{id} 时使用。
         word_rows = connection.execute(
             """
-            SELECT item_text, source_context, created_at
+            SELECT id, item_text, source_context, created_at
             FROM review_items
             WHERE item_type = 'word'
             ORDER BY created_at DESC, id DESC
@@ -135,7 +136,7 @@ def get_dashboard() -> dict[str, Any]:
         # 同样处理 phrase；CYD 屏幕窄，重复的 item_text 会挤占空间，统一在下方去重。
         phrase_rows = connection.execute(
             """
-            SELECT item_text, source_context, created_at
+            SELECT id, item_text, source_context, created_at
             FROM review_items
             WHERE item_type = 'phrase'
             ORDER BY created_at DESC, id DESC
@@ -152,6 +153,14 @@ def get_dashboard() -> dict[str, Any]:
             LIMIT 1
             """
         ).fetchone()
+        # A19: 用 top_context id 反查 contexts 表拿 display title，避免 Web/CYD 显示原始 id。
+        top_context_title: str | None = None
+        if top_context:
+            title_row = connection.execute(
+                "SELECT title FROM contexts WHERE id = ?",
+                (top_context["detected_context"],),
+            ).fetchone()
+            top_context_title = title_row["title"] if title_row else None
         # recent_keywords 取自最近 10 次分析的 keywords_json。
         recent_rows = connection.execute(
             """
@@ -186,6 +195,7 @@ def get_dashboard() -> dict[str, Any]:
         "saved_words": saved_words,
         "saved_phrases": saved_phrases,
         "top_context": top_context["detected_context"] if top_context else None,
+        "top_context_title": top_context_title,
         "recent_keywords": recent_keywords[:10],
         "review_today": int(review_today_row["count"]) if review_today_row else 0,
     }
@@ -240,9 +250,20 @@ def _context_from_row(row: sqlite3.Row) -> dict[str, Any]:
     }
 
 
+def delete_review_item(item_id: int) -> bool:
+    # A18: 按主键删除一条复习项，返回是否真的删到了行。
+    with get_connection() as connection:
+        cursor = connection.execute(
+            "DELETE FROM review_items WHERE id = ?",
+            (item_id,),
+        )
+        return cursor.rowcount > 0
+
+
 def _review_from_row(row: sqlite3.Row) -> dict[str, Any]:
-    # 统一 review item 的 API 输出格式。
+    # 统一 review item 的 API 输出格式；A18 起加入 id 供 Web 删除按钮使用。
     return {
+        "id": row["id"],
         "item_text": row["item_text"],
         "source_context": row["source_context"],
         "created_at": row["created_at"],

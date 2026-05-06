@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, field_validator
 
 from .database import (
+    delete_review_item,
     get_context_by_id,
     get_dashboard,
     init_db,
@@ -133,6 +134,15 @@ def save_item_endpoint(payload: SaveItemRequest) -> dict:
         source_context=payload.source_context,
     )
     return {"id": item_id, "saved": True}
+
+
+@app.delete("/saved_item/{item_id}")
+def delete_saved_item_endpoint(item_id: int) -> dict:
+    # A18: 删除单条复习项，让用户能清理错误保存的词。
+    deleted = delete_review_item(item_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Item not found")
+    return {"id": item_id, "deleted": True}
 
 
 @app.get("/dashboard")

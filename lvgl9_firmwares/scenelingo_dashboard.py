@@ -97,6 +97,22 @@ _C12_SUM_CHARS   = const(48)  # summary 截断长度（最多 1 句）
 _C12_LABEL_CHARS = const(40)  # Dashboard 普通标签文本截断长度
 
 
+# ==================== C15 配色常量 - 英格兰绿·乡村色系 ====================
+# 与 web/index.html 的 CSS 变量系统色系对齐，保证 Web 和 CYD 属于同一产品视觉。
+# CYD 深色屏幕适配版：深森林绿背景，保留铜金点缀和暖象牙白文字。
+# 只存 hex 整数（兼容 const()），函数内再调 lv.color_hex() 转换，
+# 避免模块级调用 lv API 时显示尚未初始化的问题。
+_COL_BG_HEX         = const(0x0e1a0a)  # 深森林绿背景（原深蓝黑 0x101418）
+_COL_PRIMARY_HEX    = const(0x3a6624)  # 英格兰绿主按钮（nav / Back / Refresh）
+_COL_PRIMARY_LT_HEX = const(0x4e8030)  # 稍浅绿（Insight View keyword 按钮）
+_COL_ACCENT_HEX     = const(0xb8891a)  # 铜金（phrase 按钮 / 保存成功提示）
+_COL_TEXT_HEX       = const(0xf0ead8)  # 暖象牙白主文字（原纯白）
+_COL_MUTED_HEX      = const(0x7a9a6a)  # 灰绿色次要文字（副标题、区块标签）
+_COL_DANGER_HEX     = const(0xcc3333)  # 深红（保存失败提示）
+_COL_HEADER_HEX     = const(0x3a6624)  # 主绿·Header 面板（与近黑背景高对比）
+_COL_CARD_HEX       = const(0x243b14)  # 中绿·卡片容器（介于背景和主绿之间）
+
+
 # ==================== Mock 数据 ====================
 # C3 把 4 个 MVP context 的 mock 数据集中放在这里。
 # UI 页面只调用 fetch_context() / fetch_dashboard()，后续换真实 API 时不需要重写页面。
@@ -489,6 +505,17 @@ def normalize_context(data):
 #   - 线 C 不修改 web/index.html。
 
 
+def _font(size):
+    # 返回不小于 size 的最近可用 montserrat 字体，找不到时返回 None。
+    # 此固件只编译了 12/14/16，故 22/18/20 均回退到 16。
+    for s in (size, 16, 14, 12):
+        try:
+            return getattr(lv, "font_montserrat_" + str(s))
+        except Exception:
+            pass
+    return None
+
+
 def init_display():
     # 业务文件独立初始化屏幕和触摸，不依赖 touch_color_test.py。
     global display, indev, lv_task_handler
@@ -550,7 +577,7 @@ def init_display():
 
 def set_common_screen(scr):
     # 小屏幕默认不滚动，页面内容控制在 3-5 个主要元素。
-    scr.set_style_bg_color(lv.color_hex(0x101418), lv.PART.MAIN)
+    scr.set_style_bg_color(lv.color_hex(_COL_BG_HEX), lv.PART.MAIN)
     scr.set_style_bg_opa(lv.OPA._100, lv.PART.MAIN)
     scr.remove_flag(lv.obj.FLAG.SCROLLABLE)
 
@@ -560,8 +587,11 @@ def add_title(parent, text):
     label.set_text(text)
     label.set_width(220)
     label.align(lv.ALIGN.TOP_MID, 0, 12)
-    label.set_style_text_color(lv.color_white(), 0)
+    label.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
     label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+    f = _font(20)
+    if f:
+        label.set_style_text_font(f, 0)
     return label
 
 
@@ -571,7 +601,7 @@ def add_label(parent, text, y, height=28):
     label.set_width(220)
     label.set_height(height)
     label.align(lv.ALIGN.TOP_MID, 0, y)
-    label.set_style_text_color(lv.color_white(), 0)
+    label.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
     label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
     try:
         label.set_long_mode(lv.label.LONG.WRAP)
@@ -580,14 +610,27 @@ def add_label(parent, text, y, height=28):
     return label
 
 
-def add_button(parent, text, y, cb, width=190, height=44, x_ofs=0):
+def add_button(parent, text, y, cb, width=190, height=44, x_ofs=0, bg_color=None):
     # 统一的大按钮，方便手指点击，也方便后续 C5-C10 复用。
     # x_ofs 支持水平偏移，C8 keyword 2 列布局使用 ±59px 偏移实现双列。
+    # bg_color 接受 int hex（如 _COL_PRIMARY_HEX），不传则用主按钮色。
     btn = lv.button(parent)
     btn.set_size(width, height)
     btn.align(lv.ALIGN.TOP_MID, x_ofs, y)
-    btn.set_style_bg_color(lv.color_hex(0x2F6FED), lv.PART.MAIN)
-    btn.set_style_radius(6, lv.PART.MAIN)
+    col = bg_color if bg_color is not None else _COL_PRIMARY_HEX
+    btn.set_style_bg_color(lv.color_hex(col), lv.PART.MAIN)
+    btn.set_style_radius(10, lv.PART.MAIN)
+    btn.set_style_border_width(1, lv.PART.MAIN)
+    btn.set_style_border_color(lv.color_hex(_COL_TEXT_HEX), lv.PART.MAIN)
+    btn.set_style_border_opa(38, lv.PART.MAIN)
+    try:
+        btn.set_style_shadow_width(10, lv.PART.MAIN)
+        btn.set_style_shadow_color(lv.color_hex(0x000000), lv.PART.MAIN)
+        btn.set_style_shadow_opa(90, lv.PART.MAIN)
+        btn.set_style_shadow_ofs_y(4, lv.PART.MAIN)
+        btn.set_style_shadow_spread(1, lv.PART.MAIN)
+    except Exception:
+        pass
     btn.remove_flag(lv.obj.FLAG.SCROLLABLE)
     btn.add_event_cb(lambda event: cb() if event.get_code() == lv.EVENT.CLICKED else None,
                      lv.EVENT.ALL, None)
@@ -598,10 +641,12 @@ def add_button(parent, text, y, cb, width=190, height=44, x_ofs=0):
     return btn
 
 
-def set_status(text):
+def set_status(text, color_hex=None):
     global status_label
     if status_label is not None:
         status_label.set_text(text)
+        if color_hex is not None:
+            status_label.set_style_text_color(lv.color_hex(color_hex), 0)
 
 
 # ==================== C5 Screen Navigation ====================
@@ -682,24 +727,54 @@ def _render_home():
     scr = lv.obj()
     set_common_screen(scr)
 
-    # 主标题居中，字体沿用默认大字体，保证在小屏幕上清晰可读。
-    add_title(scr, "Scene Words")
+    # ── Header 面板：深黑绿底色，容纳品牌标题和副标题 ──
+    hdr = lv.obj(scr)
+    hdr.set_size(240, 72)
+    hdr.align(lv.ALIGN.TOP_MID, 0, 0)
+    hdr.set_style_bg_color(lv.color_hex(_COL_HEADER_HEX), lv.PART.MAIN)
+    hdr.set_style_border_width(0, lv.PART.MAIN)
+    hdr.set_style_radius(0, lv.PART.MAIN)
+    hdr.set_style_pad_all(0, lv.PART.MAIN)
+    hdr.remove_flag(lv.obj.FLAG.SCROLLABLE)
 
-    # 副标题提示用户这是场景化英语学习工具，文字短小不占位。
-    sub = add_label(scr, "Learn English in Context", 46, 22)
-    sub.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    # 主标题：大字体，暖象牙白。
+    t = lv.label(hdr)
+    t.set_text("Scene Words")
+    t.set_width(220)
+    t.align(lv.ALIGN.TOP_MID, 0, 10)
+    t.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
+    t.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+    f22 = _font(22)
+    if f22:
+        t.set_style_text_font(f22, 0)
 
-    # 三个主按钮间距 56px，保证手指不会误点相邻按钮。
-    # Real-world 进入真实场景的 Context Select。
-    add_button(scr, "Real-world", 86, lambda: go_to("context_select", "real-world"))
-    # Story 进入故事场景的 Context Select。
-    add_button(scr, "Story", 146, lambda: go_to("context_select", "story"))
-    # Dashboard 直接跳转到复习列表页面。
-    add_button(scr, "Dashboard", 206, lambda: go_to("dashboard"))
+    # 副标题：次要灰绿色，小号。
+    s = lv.label(hdr)
+    s.set_text("Learn English in Context")
+    s.set_width(220)
+    s.align(lv.ALIGN.TOP_MID, 0, 46)
+    s.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+    s.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
-    # 底部状态行：Mock 模式显示 "Mock"，真实 API 模式显示后端 IP，方便联调时确认。
-    mode = "Mock" if USE_MOCK_DATA else "API " + API_BASE.replace("http://", "")
-    add_label(scr, mode, 268, 28)
+    # ── 铜金分割线：1px 视觉锚点，将 header 与按钮区分隔 ──
+    div = lv.obj(scr)
+    div.set_size(240, 3)
+    div.align(lv.ALIGN.TOP_MID, 0, 72)
+    div.set_style_bg_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.MAIN)
+    div.set_style_border_width(0, lv.PART.MAIN)
+    div.set_style_radius(0, lv.PART.MAIN)
+
+    # ── 三个主按钮：间距 58px，210px 宽便于手指点击 ──
+    add_button(scr, "Real-world", 86,  lambda: go_to("context_select", "real-world"), 210, 50)
+    add_button(scr, "Story",      146, lambda: go_to("context_select", "story"),      210, 50)
+    add_button(scr, "Dashboard",  206, lambda: go_to("dashboard"),                    210, 50)
+
+    # ── 底部模式标注 ──
+    mode = "Mock Mode" if USE_MOCK_DATA else API_BASE.replace("http://", "")
+    ml = lv.label(scr)
+    ml.set_text(mode)
+    ml.align(lv.ALIGN.BOTTOM_MID, 0, -6)
+    ml.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
 
     lv.screen_load(scr)
 
@@ -723,29 +798,55 @@ def _render_context_select(source_type):
     scr = lv.obj()
     set_common_screen(scr)
 
-    # 标题显示当前场景类型（Real-world / Story），让用户明确知道在哪一层。
+    # ── 迷你 Header 面板 ──
+    hdr = lv.obj(scr)
+    hdr.set_size(240, 56)
+    hdr.align(lv.ALIGN.TOP_MID, 0, 0)
+    hdr.set_style_bg_color(lv.color_hex(_COL_HEADER_HEX), lv.PART.MAIN)
+    hdr.set_style_border_width(0, lv.PART.MAIN)
+    hdr.set_style_radius(0, lv.PART.MAIN)
+    hdr.set_style_pad_all(0, lv.PART.MAIN)
+    hdr.remove_flag(lv.obj.FLAG.SCROLLABLE)
+
     type_label = _SOURCE_TYPE_LABELS.get(current_source_type, "Context")
-    add_title(scr, type_label)
+    t = lv.label(hdr)
+    t.set_text(type_label)
+    t.set_width(220)
+    t.align(lv.ALIGN.TOP_MID, 0, 8)
+    t.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
+    t.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+    f18 = _font(18)
+    if f18:
+        t.set_style_text_font(f18, 0)
 
-    # 副标题提示用户操作，字号小、颜色淡，不抢主按钮的视觉重心。
-    sub = add_label(scr, "Select a context", 46, 22)
-    sub.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    sub = lv.label(hdr)
+    sub.set_text("Select a context")
+    sub.set_width(220)
+    sub.align(lv.ALIGN.TOP_MID, 0, 36)
+    sub.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+    sub.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
 
-    # 按 context 列表渲染按钮，最多显示 4 个，超出部分不显示（小屏幕限制）。
-    # 按钮宽度 210px，高度 48px，间距 64px，手指易点中。
+    # 铜金分割线。
+    div = lv.obj(scr)
+    div.set_size(240, 3)
+    div.align(lv.ALIGN.TOP_MID, 0, 56)
+    div.set_style_bg_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.MAIN)
+    div.set_style_border_width(0, lv.PART.MAIN)
+    div.set_style_radius(0, lv.PART.MAIN)
+
+    # ── Context 按钮：从 y=68 开始，间距 58px ──
     contexts = fetch_contexts().get(current_source_type, [])
-    y = 84
+    y = 68
     for context in contexts[:4]:
         context_id = context.get("id", "coffee_shop")
-        title = context.get("title", context_id)
-        # 用默认参数捕获 context_id，避免 lambda 闭包陷阱。
-        add_button(scr, title, y,
+        ctx_title = context.get("title", context_id)
+        add_button(scr, ctx_title, y,
                    lambda context_id=context_id: open_context(context_id),
-                   210, 48)
-        y += 64
+                   210, 50)
+        y += 60
 
-    # Back 按钮固定在屏幕底部，返回 Home（C5 的 go_back() 历史栈弹出）。
-    add_button(scr, "Back", 270, go_back, 100, 38)
+    # Back 按钮固定在底部。
+    add_button(scr, "Back", 274, go_back, 110, 36)
     lv.screen_load(scr)
 
 
@@ -781,9 +882,15 @@ def _render_insight(data):
     # 页面标题显示 context 名称（例如 "Coffee Shop"）。
     add_title(scr, title)
 
-    # "Top Keywords" 区块标签，灰色小字，与按钮区分视觉层级。
+    # "Top Keywords" 区块标签 + 铜金左侧竖条装饰。
     kw_hdr = add_label(scr, "Top Keywords", 36, 16)
-    kw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    kw_hdr.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+    kw_bar = lv.obj(scr)
+    kw_bar.set_pos(8, 37)
+    kw_bar.set_size(3, 13)
+    kw_bar.set_style_bg_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.MAIN)
+    kw_bar.set_style_border_width(0, lv.PART.MAIN)
+    kw_bar.set_style_radius(1, lv.PART.MAIN)
 
     # keyword 按钮 2 列排列：偶数索引左列（x=-59），奇数索引右列（x=+59）。
     # 每 2 个关键词占一行，行高 30px。
@@ -796,12 +903,18 @@ def _render_insight(data):
         # C12：keyword 文本截断到 _C12_KW_CHARS 字符，适配 108px 按钮宽度。
         add_button(scr, kw[:_C12_KW_CHARS], y_kw,
                    lambda kw=kw: handle_save(kw, "word", context_id),
-                   108, 26, x_ofs)
+                   108, 26, x_ofs, bg_color=_COL_PRIMARY_LT_HEX)
 
-    # "Useful Phrases" 区块标签。
+    # "Useful Phrases" 区块标签 + 铜金左侧竖条装饰。
     y_ph_hdr = y_kw + 30
     ph_hdr = add_label(scr, "Useful Phrases", y_ph_hdr, 16)
-    ph_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    ph_hdr.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+    ph_bar = lv.obj(scr)
+    ph_bar.set_pos(8, y_ph_hdr + 1)
+    ph_bar.set_size(3, 13)
+    ph_bar.set_style_bg_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.MAIN)
+    ph_bar.set_style_border_width(0, lv.PART.MAIN)
+    ph_bar.set_style_radius(1, lv.PART.MAIN)
 
     # phrase 按钮全宽（210px），截断到 30 字符防止长 phrase 撑破布局。
     # 用 lambda 默认参数捕获 ph，避免闭包陷阱。
@@ -810,7 +923,7 @@ def _render_insight(data):
         # C12：phrase 文本截断到 _C12_PH_CHARS 字符，防止长 phrase 撑破 210px 按钮。
         add_button(scr, ph[:_C12_PH_CHARS], y_ph,
                    lambda ph=ph: handle_save(ph, "phrase", context_id),
-                   210, 26)
+                   210, 26, bg_color=_COL_ACCENT_HEX)
         y_ph += 28
 
     # C12：summary 只取第一句，截断到 _C12_SUM_CHARS 字符（最多 1 句）。
@@ -835,7 +948,7 @@ def _render_insight(data):
 def handle_save(item_text, item_type, source_context):
     # 空文本不发请求（例如 mock 数据中 keyword 列表为空时的防御）。
     if not item_text:
-        set_status("Nothing to save")
+        set_status("Nothing to save", _COL_MUTED_HEX)
         return
 
     # C10 核心：调用 save_item() 向后端发送 POST /save_item。
@@ -844,10 +957,10 @@ def handle_save(item_text, item_type, source_context):
 
     if result and result.get("saved"):
         # 成功时显示保存的内容前 12 字符，方便用户确认点的是哪个词。
-        set_status("Saved: " + item_text[:12])
+        set_status("Saved: " + item_text[:12], _COL_ACCENT_HEX)
     else:
         # 真实 API 失败时明确提示，但 Insight View 保持可用，不崩溃不跳页。
-        set_status("Save failed")
+        set_status("Save failed", _COL_DANGER_HEX)
 
 
 # ==================== C11 API 联调辅助 ====================
@@ -875,52 +988,170 @@ def probe_api():
 def _render_dashboard():
     global status_label
 
-    # fetch_dashboard() 在网络失败时返回 MOCK_DASHBOARD，保证此处不为 None。
     data = fetch_dashboard()
 
-    # C12 规则：saved words 最多显示 _C12_MAX_WORDS 个，小屏幕不宜过多。
     words = data.get("saved_words", [])[:_C12_MAX_WORDS]
-    # C12 规则：saved phrases 最多显示 _C12_MAX_PH 个。
     phrases = data.get("saved_phrases", [])[:_C12_MAX_PH]
     top_context = str(data.get("top_context") or "-")
     review_today = str(data.get("review_today", 0))
+    review_int = int(data.get("review_today", 0))
+    word_count = len(words)
+    phrase_count = len(phrases)
 
-    # 将列表转为逗号分隔文本，C12 规则截断到 _C12_LABEL_CHARS 字符防止换行过多。
     word_text = ", ".join(item.get("item_text", "") for item in words) or "None yet"
     phrase_text = ", ".join(item.get("item_text", "") for item in phrases) or "None yet"
 
     scr = lv.obj()
     set_common_screen(scr)
 
-    # 页面标题。
-    add_title(scr, "Dashboard")
+    f16 = _font(16)
 
-    # Saved Words 区块：灰色小标题 + 内容标签（可换行，高 32px）。
-    sw_hdr = add_label(scr, "Saved Words", 36, 16)
-    sw_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
-    # C12：标签文本截断到 _C12_LABEL_CHARS 字符，防止换行挤占其他元素空间。
-    add_label(scr, word_text[:_C12_LABEL_CHARS], 55, 32)
+    # ── Header 面板（主绿底色，与近黑背景高对比） ──
+    hdr = lv.obj(scr)
+    hdr.set_size(240, 48)
+    hdr.align(lv.ALIGN.TOP_MID, 0, 0)
+    hdr.set_style_bg_color(lv.color_hex(_COL_HEADER_HEX), lv.PART.MAIN)
+    hdr.set_style_border_width(0, lv.PART.MAIN)
+    hdr.set_style_radius(0, lv.PART.MAIN)
+    hdr.set_style_pad_all(0, lv.PART.MAIN)
+    hdr.remove_flag(lv.obj.FLAG.SCROLLABLE)
 
-    # Saved Phrases 区块：灰色小标题 + 内容标签。
-    sp_hdr = add_label(scr, "Saved Phrases", 92, 16)
-    sp_hdr.set_style_text_color(lv.color_hex(0x8899AA), 0)
-    add_label(scr, phrase_text[:_C12_LABEL_CHARS], 111, 32)
+    ht = lv.label(hdr)
+    ht.set_text("Dashboard")
+    ht.set_width(140)
+    ht.align(lv.ALIGN.TOP_LEFT, 12, 14)
+    ht.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
+    if f16:
+        ht.set_style_text_font(f16, 0)
 
-    # 统计信息：Top Context 和 Review Today。
-    add_label(scr, "Top: " + top_context[:24], 148, 22)
-    add_label(scr, "Review Today: " + review_today, 174, 22)
+    # Header 右侧：mock / live 小徽标
+    source = "MOCK" if USE_MOCK_DATA else "LIVE"
+    badge = lv.label(hdr)
+    badge.set_text(source)
+    badge.align(lv.ALIGN.TOP_RIGHT, -10, 16)
+    badge.set_style_text_color(lv.color_hex(_COL_ACCENT_HEX), 0)
 
-    # 数据来源状态行：mock 模式显示 "mock"，真实 API 显示 "live"。
-    # 方便联调时快速确认 CYD 拿到的是 mock 还是真实数据。
-    source = "mock" if USE_MOCK_DATA else "live"
-    status_label = add_label(scr, source, 200, 16)
-    status_label.set_style_text_color(lv.color_hex(0x8899AA), 0)
+    # 铜金分割线（3px）
+    div = lv.obj(scr)
+    div.set_size(240, 3)
+    div.align(lv.ALIGN.TOP_MID, 0, 48)
+    div.set_style_bg_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.MAIN)
+    div.set_style_border_width(0, lv.PART.MAIN)
+    div.set_style_radius(0, lv.PART.MAIN)
 
-    # Refresh 和 Back 并排放在底部，节省纵向空间。
-    # Refresh 左偏 x=-57，重新调用 _render_dashboard() 拉取最新 /dashboard 数据。
-    add_button(scr, "Refresh", 222, lambda: _render_dashboard(), 106, 38, -57)
-    # Back 右偏 x=+57，返回上一页（通常是 Home）。
-    add_button(scr, "Back", 222, go_back, 90, 38, 57)
+    # ── 右侧：Arc 仪表盘（Review Today） ──
+    # Arc 位置：右侧，y=58，尺寸 84×84
+    try:
+        arc = lv.arc(scr)
+        arc.set_size(84, 84)
+        arc.align(lv.ALIGN.TOP_RIGHT, -8, 58)
+        arc.set_range(0, 15)
+        arc.set_value(min(review_int, 15))
+        arc.set_style_arc_color(lv.color_hex(_COL_CARD_HEX), lv.PART.MAIN)
+        arc.set_style_arc_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.INDICATOR)
+        arc.set_style_arc_width(10, lv.PART.MAIN)
+        arc.set_style_arc_width(10, lv.PART.INDICATOR)
+        arc.set_style_bg_opa(lv.OPA.TRANSP, lv.PART.MAIN)
+        arc.set_style_border_width(0, lv.PART.MAIN)
+        try:
+            arc.set_style_size(0, 0, lv.PART.KNOB)
+        except Exception:
+            pass
+        arc.remove_flag(lv.obj.FLAG.CLICKABLE)
+
+        # 数字居中（大字体）
+        arc_n = lv.label(scr)
+        arc_n.set_text(review_today)
+        arc_n.align_to(arc, lv.ALIGN.CENTER, 0, -6)
+        arc_n.set_style_text_color(lv.color_hex(_COL_ACCENT_HEX), 0)
+        if f16:
+            arc_n.set_style_text_font(f16, 0)
+
+        # "TODAY" 小标
+        arc_l = lv.label(scr)
+        arc_l.set_text("TODAY")
+        arc_l.align_to(arc, lv.ALIGN.CENTER, 0, 12)
+        arc_l.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+
+    except Exception as e:
+        print("arc err:", e)
+        add_label(scr, "Review: " + review_today, 90, 20)
+
+    # ── 左侧：Words / Phrases（宽 136px，x=10） ──
+    # Words 小标
+    wl = lv.label(scr)
+    wl.set_text("Words (%d)" % word_count)
+    wl.set_pos(10, 58)
+    wl.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+
+    # 铜金左竖条
+    wb = lv.obj(scr)
+    wb.set_pos(10, 74)
+    wb.set_size(3, 28)
+    wb.set_style_bg_color(lv.color_hex(_COL_PRIMARY_LT_HEX), lv.PART.MAIN)
+    wb.set_style_border_width(0, lv.PART.MAIN)
+    wb.set_style_radius(1, lv.PART.MAIN)
+
+    wv = lv.label(scr)
+    wv.set_text(word_text[:20])
+    wv.set_pos(18, 74)
+    wv.set_width(120)
+    wv.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
+    try:
+        wv.set_long_mode(lv.label.LONG.WRAP)
+    except Exception:
+        pass
+
+    # Phrases 小标
+    pl = lv.label(scr)
+    pl.set_text("Phrases (%d)" % phrase_count)
+    pl.set_pos(10, 110)
+    pl.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+
+    # 铜金左竖条
+    pb = lv.obj(scr)
+    pb.set_pos(10, 126)
+    pb.set_size(3, 28)
+    pb.set_style_bg_color(lv.color_hex(_COL_ACCENT_HEX), lv.PART.MAIN)
+    pb.set_style_border_width(0, lv.PART.MAIN)
+    pb.set_style_radius(1, lv.PART.MAIN)
+
+    pv = lv.label(scr)
+    pv.set_text(phrase_text[:20])
+    pv.set_pos(18, 126)
+    pv.set_width(120)
+    pv.set_style_text_color(lv.color_hex(_COL_TEXT_HEX), 0)
+    try:
+        pv.set_long_mode(lv.label.LONG.WRAP)
+    except Exception:
+        pass
+
+    # ── 横向分隔线 ──
+    sep = lv.obj(scr)
+    sep.set_size(220, 1)
+    sep.align(lv.ALIGN.TOP_MID, 0, 158)
+    sep.set_style_bg_color(lv.color_hex(_COL_PRIMARY_LT_HEX), lv.PART.MAIN)
+    sep.set_style_border_width(0, lv.PART.MAIN)
+    sep.set_style_radius(0, lv.PART.MAIN)
+    sep.set_style_bg_opa(80, lv.PART.MAIN)
+
+    # Top Context
+    tl = lv.label(scr)
+    tl.set_text("Top: " + top_context[:26])
+    tl.align(lv.ALIGN.TOP_MID, 0, 164)
+    tl.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+    tl.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+
+    # 状态行（status_label 供 set_status() 回写）
+    status_label = lv.label(scr)
+    status_label.set_text("")
+    status_label.align(lv.ALIGN.TOP_MID, 0, 182)
+    status_label.set_style_text_color(lv.color_hex(_COL_MUTED_HEX), 0)
+    status_label.set_style_text_align(lv.TEXT_ALIGN.CENTER, 0)
+
+    # ── Refresh 和 Back ──
+    add_button(scr, "Refresh", 200, lambda: _render_dashboard(), 110, 44, -56)
+    add_button(scr, "Back",    200, go_back,                     92,  44, 58)
 
     lv.screen_load(scr)
 
