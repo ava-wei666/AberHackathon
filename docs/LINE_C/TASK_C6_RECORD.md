@@ -19,7 +19,7 @@ C6 本次重点：
 
 | 字段 | 内容 |
 | --- | --- |
-| 业务主文件 | `lvgl9_firmwares/scenelingo_dashboard.py` |
+| 业务主文件 | `embedded/scenelingo_dashboard.py` |
 | 新增记录文档 | `docs/TASK_C6_RECORD.md` |
 | 是否修改 `touch_color_test.py` | 否 |
 | 是否提交真实 Wi-Fi 密码 | 否 |

@@ -35,15 +35,15 @@ a5bceb2 (HEAD, origin/main)  Merge — Geist-L
 ### 验证命令
 
 ```powershell
-git ls-tree 7b8b5a2 -- lvgl9_firmwares/    # 线 C 那一侧：有 scenelingo_dashboard.py
-git ls-tree origin/main -- lvgl9_firmwares/ # 合并后的 main：没有 scenelingo_dashboard.py
+git ls-tree 7b8b5a2 -- embedded/    # 线 C 那一侧：有 scenelingo_dashboard.py
+git ls-tree origin/main -- embedded/ # 合并后的 main：没有 scenelingo_dashboard.py
 ```
 
 ### 丢失文件清单
 
 | 文件                                                   | 状态                |
 | ---------------------------------------------------- | ----------------- |
-| `lvgl9_firmwares/scenelingo_dashboard.py`            | 931 行的 CYD 主程序，丢失 |
+| `embedded/scenelingo_dashboard.py`            | 931 行的 CYD 主程序，丢失 |
 | `docs/TASK_C2_RECORD.md` ~ `docs/TASK_C14_RECORD.md` | 13 个任务记录全部丢失      |
 
 未丢失：`docs/TASK_C0_RECORD.md`、`docs/TASK_C1_RECORD.md`（线 C 早期 Wi-Fi / 触摸验证）；`docs/LINE_A/`（线 A 步骤文档）；`backend/`（线 A 后端）；`web/index.html`（线 B 网页）。
@@ -54,7 +54,7 @@ git ls-tree origin/main -- lvgl9_firmwares/ # 合并后的 main：没有 sceneli
 
 ```powershell
 git checkout 7b8b5a2 -- `
-  lvgl9_firmwares/scenelingo_dashboard.py `
+  embedded/scenelingo_dashboard.py `
   docs/TASK_C2_RECORD.md docs/TASK_C3_RECORD.md docs/TASK_C4_RECORD.md `
   docs/TASK_C5_RECORD.md docs/TASK_C6_RECORD.md docs/TASK_C7_RECORD.md `
   docs/TASK_C8_RECORD.md docs/TASK_C9_RECORD.md docs/TASK_C10_RECORD.md `
@@ -92,7 +92,7 @@ git commit -m "Restore Line C files lost in merge a5bceb2"
 ### 上传命令
 
 ```powershell
-mpremote connect COM3 fs cp lvgl9_firmwares/scenelingo_dashboard.py :main.py
+mpremote connect COM3 fs cp embedded/scenelingo_dashboard.py :main.py
 mpremote connect COM3 reset
 ```
 
@@ -106,8 +106,8 @@ CYD 屏幕显示的 Home 标题写的是 `SceneLingo`，与产品正式名 `Scen
 
 | 文件                                        | 行   | 修改前                                                    | 修改后                                                     |
 | ----------------------------------------- | --- | ------------------------------------------------------ | ------------------------------------------------------- |
-| `lvgl9_firmwares/scenelingo_dashboard.py` | 665 | `add_title(scr, "SceneLingo")`                         | `add_title(scr, "Scene Words")`                         |
-| `lvgl9_firmwares/scenelingo_dashboard.py` | 923 | `print("--> SceneLingo CYD dashboard ready.")`         | `print("--> Scene Words CYD dashboard ready.")`         |
+| `embedded/scenelingo_dashboard.py` | 665 | `add_title(scr, "SceneLingo")`                         | `add_title(scr, "Scene Words")`                         |
+| `embedded/scenelingo_dashboard.py` | 923 | `print("--> SceneLingo CYD dashboard ready.")`         | `print("--> Scene Words CYD dashboard ready.")`         |
 | `web/index.html`                          | 6   | `<title>SceneLingo Web Input</title>`                  | `<title>Scene Words Web Input</title>`                  |
 | `web/index.html`                          | 376 | `<h1>SceneLingo</h1>`                                  | `<h1>Scene Words</h1>`                                  |
 | `backend/main.py`                         | 76  | `app = FastAPI(title="SceneLingo API", ...)`           | `app = FastAPI(title="Scene Words API", ...)`           |
@@ -115,7 +115,7 @@ CYD 屏幕显示的 Home 标题写的是 `SceneLingo`，与产品正式名 `Scen
 
 ### 暂未修改的位置（避免破坏现有联调或属于历史记录）
 
-- 文件名：`lvgl9_firmwares/scenelingo_dashboard.py`、`scenelingo.db`
+- 文件名：`embedded/scenelingo_dashboard.py`、`scenelingo.db`
 - 热点 SSID：`SceneLingo-CYD`（改名要重配热点 + CYD 重连）
 - 历史任务记录：`docs/TASK_C*_RECORD.md`、`docs/LINE_*` 系列
 - 内部脚本与说明：`README.md`、`backend/{selftest,demo_check,cyd_smoke,web_smoke}.py`
@@ -124,7 +124,7 @@ CYD 屏幕显示的 Home 标题写的是 `SceneLingo`，与产品正式名 `Scen
 ### 重新上传 CYD
 
 ```powershell
-mpremote connect COM3 fs cp lvgl9_firmwares/scenelingo_dashboard.py :main.py
+mpremote connect COM3 fs cp embedded/scenelingo_dashboard.py :main.py
 mpremote connect COM3 reset
 ```
 

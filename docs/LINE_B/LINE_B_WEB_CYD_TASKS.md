@@ -56,7 +56,7 @@ web/
 
 ```
 backend/                       # 线 A
-lvgl9_firmwares/               # 线 C
+embedded/               # 线 C
 docs/LINE_C_CONTENT_DEMO_QA_TASKS.md
 ```
 

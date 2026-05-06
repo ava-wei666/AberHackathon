@@ -301,7 +301,7 @@ python -m uvicorn backend.main:app --host 0.0.0.0 --port 8000
 
 ## 10. CYD 嵌入式屏幕 — 每个页面的每个功能
 
-文件：[lvgl9_firmwares/scenelingo_dashboard.py](lvgl9_firmwares/scenelingo_dashboard.py)，约 950 行，运行在 ESP32 + ILI9341（240×320）+ XPT2046 触摸 上。
+文件：[embedded/scenelingo_dashboard.py](embedded/scenelingo_dashboard.py)，约 950 行，运行在 ESP32 + ILI9341（240×320）+ XPT2046 触摸 上。
 
 ### 10.0 全局元素与运行模式
 
@@ -474,7 +474,7 @@ hackathon/
 │  ├─ selftest.py / web_smoke.py / cyd_smoke.py / demo_check.py   自测脚本
 ├─ web/
 │  └─ index.html           Web Input + Web Dashboard 单文件页
-├─ lvgl9_firmwares/
+├─ embedded/
 │  ├─ scenelingo_dashboard.py     CYD 主程序（Home / Context Select / Insight / Dashboard）
 │  └─ lvgl9_3_micropython_cyd.bin LVGL 9 + MicroPython 固件
 ├─ docs/

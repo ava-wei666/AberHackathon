@@ -4,3 +4,4 @@ __pycache__/
 scenelingo.db
 /tmp*/
 .uvicorn_*.log
+*.bin

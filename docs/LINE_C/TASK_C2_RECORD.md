@@ -9,14 +9,14 @@
 本次新增：
 
 ```text
-lvgl9_firmwares/scenelingo_dashboard.py
+embedded/scenelingo_dashboard.py
 ```
 
 ## 本次记录字段
 
 | 字段 | 内容 |
 | --- | --- |
-| 新增业务文件 | `lvgl9_firmwares/scenelingo_dashboard.py` |
+| 新增业务文件 | `embedded/scenelingo_dashboard.py` |
 | 板端上传文件 | `:scenelingo_dashboard.py` |
 | 是否修改 `touch_color_test.py` | 否 |
 | 是否覆盖板端 `main.py` | 否 |
@@ -32,13 +32,13 @@ lvgl9_firmwares/scenelingo_dashboard.py
 
 | 步骤 | 命令 | 做了什么 | 结果字段 |
 | --- | --- | --- | --- |
-| 1 | `Get-Content -Raw -Encoding UTF8 lvgl9_firmwares\touch_color_test.py` | 读取 C0 测试文件，复用显示/触摸初始化参数 | 确认引脚、屏幕方向、触摸配置 |
+| 1 | `Get-Content -Raw -Encoding UTF8 embedded\touch_color_test.py` | 读取 C0 测试文件，复用显示/触摸初始化参数 | 确认引脚、屏幕方向、触摸配置 |
 | 2 | `Get-Content -Raw -Encoding UTF8 lvgl9_examples\lvgl_multiscreen_example.py` | 查看项目已有 LVGL 多页面写法 | 确认使用 `lv.button`、`lv.screen_load` |
 | 3 | `Get-Content -Raw -Encoding UTF8 backend\main.py` | 查看后端 API 路由和字段 | 确认 `/contexts`, `/context/{id}`, `/dashboard`, `/save_item` |
 | 4 | `Get-Content -Raw -Encoding UTF8 backend\seed_data.json` | 查看 4 个 MVP context 的 id/title/keywords/phrases | 确认业务 mock 数据字段 |
 | 5 | `git status --short --branch` | 确认工作区状态 | 开始前为 `main...origin/main`，无未提交改动 |
-| 6 | `python -m py_compile lvgl9_firmwares\scenelingo_dashboard.py` | 本地 Python 语法检查 | 通过，无语法错误 |
-| 7 | `mpremote connect COM7 fs cp lvgl9_firmwares\scenelingo_dashboard.py :scenelingo_dashboard.py` | 上传业务文件到 CYD 文件系统 | 上传成功 |
+| 6 | `python -m py_compile embedded\scenelingo_dashboard.py` | 本地 Python 语法检查 | 通过，无语法错误 |
+| 7 | `mpremote connect COM7 fs cp embedded\scenelingo_dashboard.py :scenelingo_dashboard.py` | 上传业务文件到 CYD 文件系统 | 上传成功 |
 | 8 | `mpremote connect COM7 fs ls` | 查看板端文件系统 | 存在 `boot.py`, `main.py`, `scenelingo_dashboard.py` |
 
 ## 文件结构说明

@@ -4,13 +4,13 @@
 
 ## 目标
 
-按照 `LINE_C_CONTENT_DEMO_QA_TASKS.md` 的 Task C15 要求，将 `lvgl9_firmwares/scenelingo_dashboard.py` 的硬编码颜色全部替换为语义化常量，使 CYD 屏幕配色与 `web/index.html` 的英格兰绿视觉体系保持一致。
+按照 `LINE_C_CONTENT_DEMO_QA_TASKS.md` 的 Task C15 要求，将 `embedded/scenelingo_dashboard.py` 的硬编码颜色全部替换为语义化常量，使 CYD 屏幕配色与 `web/index.html` 的英格兰绿视觉体系保持一致。
 
 ## 本次修改文件
 
 | 字段 | 内容 |
 | --- | --- |
-| 主要改动文件 | `lvgl9_firmwares/scenelingo_dashboard.py` |
+| 主要改动文件 | `embedded/scenelingo_dashboard.py` |
 | 新增记录文档 | `docs/TASK_C15_RECORD.md` |
 | 是否修改后端 | 否 |
 | 是否修改 Web | 否 |

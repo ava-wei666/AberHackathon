@@ -12,7 +12,7 @@ backend/
   seed_data.json     2 real-world contexts and 2 story contexts
 web/
   index.html         minimal browser input and result preview
-lvgl9_firmwares/
+embedded/
   touch_color_test.py
 requirements.txt
 scene_words.db       created automatically when the API starts

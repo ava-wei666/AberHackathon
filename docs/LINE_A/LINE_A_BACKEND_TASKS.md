@@ -71,8 +71,8 @@ scenelingo.db
 线 A 不负责这些文件：
 
 - `web/index.html`：线 B 负责
-- `lvgl9_firmwares/touch_color_test.py`：线 C 负责
-- `lvgl9_firmwares/scenelingo_dashboard.py`：线 C 负责
+- `embedded/touch_color_test.py`：线 C 负责
+- `embedded/scenelingo_dashboard.py`：线 C 负责
 
 ## 本地启动步骤
 

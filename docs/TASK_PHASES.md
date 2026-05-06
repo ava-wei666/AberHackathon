@@ -673,8 +673,8 @@ The detective found a clue on Baker Street and tried to solve the case.
 
 主要文件：
 
-- `lvgl9_firmwares/touch_color_test.py`
-- 建议新增：`lvgl9_firmwares/scenelingo_dashboard.py`
+- `embedded/touch_color_test.py`
+- 建议新增：`embedded/scenelingo_dashboard.py`
 
 线 C 技术栈固定：
 
@@ -714,7 +714,7 @@ MicroPython + LVGL + HTTP requests / urequests + JSON
 
 任务：
 
-- 新建 `lvgl9_firmwares/scenelingo_dashboard.py`
+- 新建 `embedded/scenelingo_dashboard.py`
 - 文件顶部集中配置 `API_BASE`
 - 文件顶部集中配置 Wi-Fi 信息或连接函数
 - 集中写 HTTP helper

@@ -12,7 +12,7 @@
 
 | 字段 | 内容 |
 | --- | --- |
-| 业务主文件 | `lvgl9_firmwares/scenelingo_dashboard.py` |
+| 业务主文件 | `embedded/scenelingo_dashboard.py` |
 | 新增记录文档 | `docs/TASK_C13_RECORD.md` |
 | 是否修改 `touch_color_test.py` | 否 |
 

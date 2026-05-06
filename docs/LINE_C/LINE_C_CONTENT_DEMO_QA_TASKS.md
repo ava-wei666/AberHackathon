@@ -47,7 +47,7 @@ MVP 阶段不要引入这些东西，避免现场调试爆炸：
 线 C 主要负责：
 
 ```
-lvgl9_firmwares/
+embedded/
   touch_color_test.py          # 已有测试文件，尽量不破坏
   scenelingo_dashboard.py      # 建议新增，作为 CYD 业务主文件
 ```
@@ -149,7 +149,7 @@ uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 建议新增：
 
 ```
-lvgl9_firmwares/scenelingo_dashboard.py
+embedded/scenelingo_dashboard.py
 ```
 
 文件结构建议：

@@ -18,7 +18,7 @@ C11 本次重点：
 
 | 字段 | 内容 |
 | --- | --- |
-| 业务主文件 | `lvgl9_firmwares/scenelingo_dashboard.py` |
+| 业务主文件 | `embedded/scenelingo_dashboard.py` |
 | 新增记录文档 | `docs/TASK_C11_RECORD.md` |
 | 是否修改 `touch_color_test.py` | 否 |
 | 是否提交真实 Wi-Fi 密码 | 否 |
@@ -42,10 +42,10 @@ C11 本次重点：
   USE_MOCK_DATA     = False
 
 步骤 4：上传文件到 CYD
-  mpremote connect COM7 fs cp lvgl9_firmwares\scenelingo_dashboard.py :scenelingo_dashboard.py
+  mpremote connect COM7 fs cp embedded\scenelingo_dashboard.py :scenelingo_dashboard.py
 
 步骤 5：运行并观察串口输出
-  mpremote connect COM7 run lvgl9_firmwares\scenelingo_dashboard.py
+  mpremote connect COM7 run embedded\scenelingo_dashboard.py
   看到 "--> API probe OK" 表示连通正常
   看到 "--> API probe FAILED" 按排查清单检查
 ```
